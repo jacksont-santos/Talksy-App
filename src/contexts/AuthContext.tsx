@@ -41,7 +41,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return userService.signin(authData)
     .then((response) => {
       const user = response.data;
-      if (user) localStorage.setItem('authToken', user.token);
+      if (user) {
+        localStorage.setItem('authToken', user.token);
+        localStorage.setItem('username', user.username);
+      }
       setAuthState({
         user: { _id: user._id, username: user.username },
         isAuthenticated: true,

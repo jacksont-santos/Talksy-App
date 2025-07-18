@@ -4,28 +4,55 @@ import React, {
   useState,
   useEffect,
   ReactNode,
+  useRef,
 } from "react";
-import { Message } from "../types/message";
-import { Room } from "../types/room";
+
+enum MessageType {
+  PUBLIC = 'public',
+  PRIVATE = 'private',
+  ADD_ROOM = 'addRoom',
+  UPDATE_ROOM = 'updateRoom',
+  REMOVE_ROOM = 'removeRoom',
+  SIGNIN_ROOM = 'signinRoom',
+  SIGNOUT_ROOM = 'signoutRoom',
+  SIGNIN_REPLY = 'signinReply',
+  ROOM_STATE = 'roomState',
+  ROOMS_STATE = 'roomsState',
+  CHAT = 'chat',
+}
+
+interface signParams {
+  type: 'signinRoom' | 'signoutRoom';
+  roomId: string;
+  nickname: string;
+  isPublic?: boolean;
+  userId?: string;
+}
+
+interface messageParams {
+  roomId: string,
+  content: string,
+  nickname: string,
+  userId?: string
+}
 
 export interface notification {
-  type: 'addRoom' | 'updateRoom' | 'removeRoom' | 'joinRoom' | 'leaveRoom',
+  type: MessageType,
   data: any,
 }
 
 interface WebSocketContextType {
+  connectPublic: () => void;
+  connectPrivate: (userId: string) => void;
+  signRoom: (params: signParams) => void;
+  sendMessage: (params: messageParams) => void;
+  getRoomState: (roomId: string, userId?: string) => void;
+  getRoomsState: (userId?: string) => void;
+  checkNotification: () => void;
+  setWsToken: (token: string) => void;
+  wsToken: string;
   connected: boolean;
-  messages: Record<string, Message[]>;
   notifications: notification[];
-  // rooms: Room[];
-  sendMessage: (
-    roomId: string,
-    content: string,
-    nickname: string,
-    userId: string
-  ) => void;
-  joinRoom: (roomId: string) => void;
-  leaveRoom: (roomId: string) => void;
 }
 
 const WebSocketContext = createContext<WebSocketContextType | undefined>(
@@ -37,24 +64,20 @@ const WS_SERVER_URL = import.meta.env.VITE_WS_SERVER_URL;
 export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
+  const socket = useRef<WebSocket | null>(null);
+
   const [connected, setConnected] = useState(false);
-  const [socket, setSocket] = useState<WebSocket | null>(null);
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
-
-  const [notifications, setNotifications] = useState<notification[]>([]);
-  // const [messages, setMessages] = useState<Record<string, Message[]>>({});
-
-  // const [rooms, setRooms] = useState<Room[]>([]);
-  const [messages, setMessages] = useState<Record<string, Message[]>>({});
   const maxReconnectAttempts = 5;
   const reconnectDelay = 2000;
 
+  const [notifications, setNotifications] = useState<notification[]>([]);
+  const [wsToken, setWsToken] = useState('');
+
   const connect = () => {
-    console.log(`Connecting to WebSocket server at ${WS_SERVER_URL}...`);
     const socketConnection = new WebSocket(WS_SERVER_URL);
 
-    socketConnection.onerror = (error) => {
-      console.error("WebSocket connection error:", error);
+    socketConnection.onerror = () => {
       if (reconnectAttempts < maxReconnectAttempts) {
         setTimeout(() => {
           setReconnectAttempts((prev) => {
@@ -66,205 +89,133 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({
     };
 
     socketConnection.onopen = () => {
-      console.log("WebSocket connection established");
       setConnected(true);
       setReconnectAttempts(0);
     };
 
-    // if (socketConnection.readyState === WebSocket.OPEN) {
-    //   socketConnection.onclose((socket, event) => {
-    //     console.log("WebSocket connection closed:", event.reason);
-    //     setConnected(false);
-    //   });
-    // }
+    socketConnection.onclose = () => {
+      setConnected(false);
+    };
 
-      socketConnection.onmessage = (event) => {
-        var msg = JSON.parse(event.data);
-        var data = msg.data;
-        // var time = new Date(msg.date);
-        // var timeStr = time.toLocaleTimeString();
+    socketConnection.onmessage = (event) => {
+      onMessage(event.data);
+    };
 
-        setNotifications((notificationsList) => [
-          ...notificationsList,
-          {
-            type: msg.type,
-            data: data,
-          }
-        ]);
-        
-      
-        // switch (msg.type) {
-        //   case "addRoom":
-        //     setRooms((list) => ([
-        //       ...list,
-        //       data
-        //     ]));
-        //     break;
-        //   case "updateRoom":
-        //     setRooms((list) => {
-        //       return list.map((room) => {
-        //         return room.id === data.id ? data : room;
-        //       });
-        //     });
-        //     break;
-        //   case "removeRoom":
-        //     setRooms((list) => {
-        //       return list.filter((room) => room.id !== data._id);
-        //     });
-        //     break;
-        //   case "newMessage":
-          
-        // }
-      };
-
-    setSocket(socketConnection);
+    socket.current = socketConnection;
   };
 
   useEffect(() => {
+    if (socket && socket.current?.readyState !== WebSocket.CLOSED)
+      socket.current?.close();
+
     connect();
     return () => {
-      if (socket) {
-        socket.close();
+      if (socket.current?.readyState) {
+        socket.current?.close();
       }
     };
   }, [reconnectAttempts]);
 
-  useEffect(() => {
-    console.log('effect');
-    if (notifications.length) {
-      setTimeout(() => {
-        setNotifications(notificationsList => notificationsList.slice(1))
-      }, 2000);
-    }
-  }, [notifications]);
+  // useEffect(() => {
+  //   if (notifications.length) {
+  //     setTimeout(() => {
+  //       setNotifications(notificationsList => notificationsList.slice(1))
+  //     }, 2000);
+  //   }
+  // }, [notifications]);
 
-  const joinRoom = (roomId: string) => {
-    if (!connected) {
-      console.error("Cannot join room: WebSocket not connected");
-      return;
-    }
+  const checkNotification = () => {
+    if (notifications.length)
+      setNotifications(notificationsList => notificationsList.slice(1))
+  }
 
-    console.log(`Joining room: ${roomId}`);
-
-    // Simulate joining room
-    if (!messages[roomId]) {
-      const welcomeMessage: Message = {
-        id: `msg-${Date.now()}`,
-        content: "Welcome to the chat room!",
-        sender: {
-          id: "system",
-          nickname: "System",
-        },
-        roomId,
-        timestamp: Date.now(),
-      };
-
-      setMessages((prev) => ({
-        ...prev,
-        [roomId]: [welcomeMessage],
-      }));
-    }
-
-    // Simulate other users in the room
-    setTimeout(() => {
-      const botMessage: Message = {
-        id: `msg-${Date.now()}`,
-        content: "Hello! Welcome to our chat room.",
-        sender: {
-          id: "bot",
-          nickname: "ChatBot",
-        },
-        roomId,
-        timestamp: Date.now(),
-      };
-
-      setMessages((prev) => ({
-        ...prev,
-        [roomId]: [...(prev[roomId] || []), botMessage],
-      }));
-    }, 2000);
+  const connectPublic = () => {
+    if (socket.current?.readyState)
+      socket.current?.send(JSON.stringify({ type: "public" }));
   };
-
-  const leaveRoom = (roomId: string) => {
-    if (!connected) {
-      console.error("Cannot leave room: WebSocket not connected");
-      return;
-    }
-
-    console.log(`Leaving room: ${roomId}`);
-
-    // Simulate leaving room
-    const leaveMessage: Message = {
-      id: `msg-${Date.now()}`,
-      content: "You have left the chat room.",
-      sender: {
-        id: "system",
-        nickname: "System",
-      },
-      roomId,
-      timestamp: Date.now(),
-    };
-
-    setMessages((prev) => ({
-      ...prev,
-      [roomId]: [...(prev[roomId] || []), leaveMessage],
-    }));
+  const connectPrivate = (userId: string) => {
+    if (socket.current?.readyState)
+      socket.current?.send(JSON.stringify({ type: "private", userId }));
   };
-
-  const sendMessage = (
-    roomId: string,
-    content: string,
-    nickname: string,
-    userId: string
-  ) => {
-    if (!connected) {
-      console.error("Cannot send message: WebSocket not connected");
-      return;
-    }
-
-    // Create new message
-    const newMessage: Message = {
-      id: `msg-${Date.now()}`,
-      content,
-      sender: {
-        id: userId,
-        nickname,
-      },
-      roomId,
-      timestamp: Date.now(),
-    };
-
-    // Add message to state
-    setMessages((prev) => ({
-      ...prev,
-      [roomId]: [...(prev[roomId] || []), newMessage],
-    }));
-
-    // Simulate response from another user
-    if (Math.random() > 0.5) {
-      setTimeout(() => {
-        const responseMessage: Message = {
-          id: `msg-${Date.now()}`,
-          content: `Thanks for your message, ${nickname}!`,
-          sender: {
-            id: "bot",
-            nickname: "ChatBot",
-          },
+  const signRoom = ({
+    type,
+    roomId,
+    nickname,
+    isPublic = true,
+    userId
+  }: signParams) => {
+    if (socket.current?.readyState) {
+      socket.current?.send(JSON.stringify({
+        type,
+        userId,
+        data: {
           roomId,
-          timestamp: Date.now(),
-        };
-
-        setMessages((prev) => ({
-          ...prev,
-          [roomId]: [...(prev[roomId] || []), responseMessage],
-        }));
-      }, 1000 + Math.random() * 2000);
+          nickname,
+          public: isPublic,
+        }
+      }));
+    };
+  };
+  const sendMessage = ({
+    roomId,
+    content,
+    nickname,
+    userId
+  }: messageParams) => {
+    if (socket.current?.readyState) {
+      const message = {
+        roomId,
+        content,
+        nickname,
+      };
+      socket.current?.send(JSON.stringify({ type: "chat", userId, data: message }));
     }
   };
+  const getRoomState = (roomId: string, userId?: string) => {
+    if (socket.current?.readyState) {
+      socket.current?.send(JSON.stringify({
+        type: MessageType.ROOM_STATE, 
+        userId,
+        data: { roomId }
+      }));
+    }
+  };
+  const getRoomsState = (userId?: string) => {
+    if (socket.current?.readyState) {
+      socket.current?.send(JSON.stringify({
+        type: MessageType.ROOMS_STATE, 
+        userId
+      }));
+    }
+  };
+
+  const onMessage = (message: string) => {
+    const msg = JSON.parse(message);
+    const { type, data } = msg;
+    setNotifications((notificationsList) => [
+      ...notificationsList,
+      {
+        type,
+        data,
+      },
+    ]);
+  }
 
   return (
     <WebSocketContext.Provider
-      value={{ connected, messages, notifications, sendMessage, joinRoom, leaveRoom }}
+      value={{
+        connectPublic,
+        connectPrivate,
+        signRoom,
+        sendMessage,
+        getRoomState,
+        getRoomsState,
+        setWsToken,
+        checkNotification,
+        wsToken,
+        connected,
+        notifications
+      }}
     >
       {children}
     </WebSocketContext.Provider>

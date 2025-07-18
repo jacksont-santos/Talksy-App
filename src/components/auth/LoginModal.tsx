@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Input } from '../common/Input';
 import { Button } from '../common/Button';
@@ -19,15 +19,21 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
     return null;
   }
 
+  useEffect(() => {
+    const storedUsername = localStorage.getItem('username');
+    if (storedUsername) setUsername(storedUsername);
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!username || !password) {
-      setError('Username and password are required');
+    const usernameFormatted = username.trim();
+    if (!usernameFormatted || !password) {
+      setError('Preencha o usuário e a senha');
       return;
     }
     
-    login({ username, password })
+    login({ username: usernameFormatted, password })
       .then(() => onClose())
       .catch((err) => setError("Usuário ou senha incorretos."));
   };

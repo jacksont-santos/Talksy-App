@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { roomService } from '../services/roomService';
 import { Room, FormRoom } from "../types/room";
 import { useWebSocket, notification } from '../contexts/WebSocketContext';
@@ -8,12 +9,14 @@ import { RoomCard } from '../components/rooms/RoomCard';
 import { CreateRoomModal } from '../components/rooms/CreateRoomModal';
 import { PlusCircle } from 'lucide-react';
 import { useLoading } from '../contexts/LoadingContext';
-
+import { RegisterModal } from '../components/auth/RegisterModal';
 
 export const Home: React.FC = () => {
 
   const loadingService = useLoading();
+  const navigate = useNavigate();
 
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
 
@@ -21,17 +24,33 @@ export const Home: React.FC = () => {
   const [privateRooms, setPrivateRooms] = useState<Room[]>([]);
   const [fetchedPublicRooms, setFetchedPublicRooms] = useState(false);
   const [fetchedPrivateRooms, setFetchedPrivateRooms] = useState(false);
+  const [roomsState, setRoomsState] = useState<Map<string, number>>(new Map());
 
-  const { notifications } = useWebSocket();
+  const [nickname, setNickname] = useState('');
+
+  const {
+    setWsToken,
+    connectPublic,
+    connectPrivate,
+    getRoomsState,
+    checkNotification,
+    notifications,
+    connected,
+  } = useWebSocket();
   const { authState } = useAuth();
 
   useEffect(() => {
+    loadingService.showLoader();
+    if (!connected) return;
+    
     roomService.getPublicRooms()
     .then((response) => {
       setPublicRooms((list) => ([
         ...list,
         ...response.data
       ]));
+      connectPublic();
+      getRoomsState();
     })
     .catch((error) => {
       if (error.status !== 404)
@@ -40,10 +59,14 @@ export const Home: React.FC = () => {
     .finally(() => {
       setFetchedPublicRooms(true);
     });
-  }, []);
+  }, [connected]);
 
   useEffect(() => {
+    if (!connected) return;
     if (authState.isAuthenticated) {
+      if (authState.user?.username) {
+        setNickname(authState.user.username);
+      };
       setFetchedPrivateRooms(false);
       roomService.getPrivateRooms()
       .then((response) => {
@@ -51,6 +74,8 @@ export const Home: React.FC = () => {
           ...list,
           ...response.data
         ]));
+        connectPrivate(authState.user!._id);
+        getRoomsState(authState.user!._id);
       })
       .catch((error) => {
         if (error.status !== 404)
@@ -61,10 +86,14 @@ export const Home: React.FC = () => {
       });
     }
     else {
+      const username = localStorage.getItem('username');
+      if (username) setNickname(username);
+      else setIsRegisterModalOpen(true);
+
       setPrivateRooms([]);
       setFetchedPrivateRooms(true);
     };
-  }, [authState.isAuthenticated]);
+  }, [connected, authState.isAuthenticated]);
 
   useEffect(() => {
     if (fetchedPublicRooms && fetchedPrivateRooms)
@@ -92,35 +121,60 @@ export const Home: React.FC = () => {
     setEditingRoom(null);
   }
 
+  const onCloseRegisterModal = () => {
+    setIsRegisterModalOpen(false);
+    const username = localStorage.getItem('username');
+    if (username) setNickname(username);
+  };
+
   const setNotification = (notification: notification) => {
+    checkNotification();
+    const { type, data } = notification;
+    const { _id: roomId, public: isPublic } = data;
 
     const rooms = publicRooms.concat(privateRooms);
-    const setRoom = notification.data.public ? setPrivateRooms : setPublicRooms;
+    const setRoom = isPublic ? setPrivateRooms : setPublicRooms;
 
-    switch (notification.type) {
-
-      case "addRoom":
-        const existentRoom = rooms.find((room) => room._id === notification.data._id);
+    switch (type) {
+      case 'addRoom':
+        const existentRoom = rooms.find((room) => room._id === roomId);
         if (existentRoom) return;
-
         setRoom((list) => [
           ...list,
-          notification.data
+          data
         ]);
         break;
 
       case "updateRoom":
         setRoom((list) => {
           return list.map((room) => {
-            return room._id === notification.data._id ? notification.data : room;
+            return room._id === roomId ? data : room;
           });
         });
         break;
 
       case "removeRoom":
         setRoom((list) => {
-          return list.filter((room) => room._id !== notification.data._id);
+          return list.filter((room) => room._id !== roomId);
         });
+        break;
+      case "roomsState":
+        setRoomsState(() => {
+          const { rooms } = data;
+          if (!rooms || !rooms.length) return new Map();
+          return new Map(
+            rooms.map(
+              (room: { roomId: string; users: string }) => [room.roomId, room.users]
+            )
+          );
+        });
+        break;
+      case "signinReply":
+        const { token } = data;
+        if (token) setWsToken(token);
+        const room = rooms.find((room) => room._id === roomId);
+        if (!room) return;
+        navigate(`/${room.public ? 'public' : 'private'}/${room._id}`);
         break;
     };
   };
@@ -129,9 +183,10 @@ export const Home: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* <RoomList rooms={rooms} authState={authState} /> */}
     <div>
+      {authState.isAuthenticated && (
       <div className="flex justify-end items-center mb-6 w-full">
         {/* <h1 className="text-2xl font-bold text-gray-900">Salas disponíneis</h1> */}
-        {authState.isAuthenticated && (
+        
           <Button 
             onClick={() => {
               setEditingRoom(null);
@@ -142,8 +197,8 @@ export const Home: React.FC = () => {
             <PlusCircle size={18} className="mr-2" />
             Criar sala
           </Button>
-        )}
       </div>
+      )}
       
       {publicRooms.length > 0 && (
         <div>
@@ -153,6 +208,9 @@ export const Home: React.FC = () => {
           <RoomCard
             key={room._id}
             room={room}
+            userId={authState.user?._id}
+            nickname={nickname}
+            usersNumber={(roomsState.get(room._id) || 0)}
             isOwner={authState.isAuthenticated && authState.user?._id === room.ownerId}
             onEdit={() => {
               setEditingRoom(room);
@@ -172,6 +230,9 @@ export const Home: React.FC = () => {
           <RoomCard
             key={room._id}
             room={room}
+            userId={authState.user?._id}
+            nickname={nickname}
+            usersNumber={(roomsState.get(room._id) || 0)}
             isOwner={authState.isAuthenticated && authState.user?._id === room.ownerId}
             onEdit={() => {
               setEditingRoom(room);
@@ -206,6 +267,13 @@ export const Home: React.FC = () => {
           }}
           onSave={saveRoom}
           room={editingRoom}
+        />
+      )}
+
+      {isRegisterModalOpen && (
+        <RegisterModal
+          isOpen={isRegisterModalOpen}
+          onClose={() => onCloseRegisterModal()}
         />
       )}
     </div>

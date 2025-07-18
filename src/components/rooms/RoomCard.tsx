@@ -1,26 +1,42 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Lock, Users, CheckCircle, XCircle } from 'lucide-react';
 import { Room } from '../../types/room';
 import { Button } from '../common/Button';
+import { useWebSocket } from '../../contexts/WebSocketContext';
 
 interface RoomCardProps {
   room: Room;
   onEdit?: () => void;
   onDelete?: () => void;
   isOwner: boolean;
+  usersNumber?: number;
+  nickname?: string;
+  userId?: string;
 }
 
 export const RoomCard: React.FC<RoomCardProps> = ({ 
   room, 
   onEdit, 
   onDelete,
-  isOwner
+  isOwner,
+  usersNumber = 0,
+  nickname = '',
+  userId,
 }) => {
-  const navigate = useNavigate();
+  const { connected, signRoom } = useWebSocket();
 
   const handleJoin = () => {
-    navigate(`/${room.public ? 'public' : 'private'}/${room._id}`);
+    if (!connected) {
+      alert('Conexão com o servidor não estabelecida. Tente novamente mais tarde.');
+      return;
+    };
+    signRoom({
+      type: 'signinRoom',
+      roomId: room._id,
+      nickname: nickname,
+      isPublic: room.public,
+      userId: userId,
+    });
   };
 
   return (
@@ -41,7 +57,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({
       
       <div className="flex items-center text-sm text-gray-500 mb-4">
         <Users size={16} className="mr-1" />
-        <span> 0/{room.maxUsers}</span>
+        <span> {usersNumber}/{room.maxUsers}</span>
       </div>
       
       <div className="flex justify-between items-center">

@@ -38,6 +38,10 @@ class RoomService {
   public async deleteRoom(roomId: string) {
     return this.httpService.delete(`/room/delete/${roomId}`);
   }
+
+  public async getRoomMessages(roomId: string, page: number = 1, limit: number = 20) {
+    return this.httpService.get(`/room/messages/${roomId}`, { params: { page, limit } });
+  }
 }
 
 export const roomService = new RoomService();
