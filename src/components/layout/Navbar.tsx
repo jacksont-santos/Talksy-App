@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { MessageSquare, LogIn, LogOut, User } from 'lucide-react';
 import { LoginModal } from '../auth/LoginModal';
 import { useAuth } from '../../contexts/AuthContext';
+import ThemeToggle from '../../style/theme';
 
 export const Navbar: React.FC = () => {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -10,7 +11,7 @@ export const Navbar: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <nav className="bg-indigo-700 text-white shadow-md">
+    <nav className="bg-indigo-700 dark:bg-zinc-900 text-white shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
@@ -19,8 +20,9 @@ export const Navbar: React.FC = () => {
               className="text-xl font-bold cursor-pointer transition-all hover:text-indigo-200"
               onClick={() => navigate('/')}
             >
-              Free Chats
+              Talksy
             </span>
+            <ThemeToggle />
           </div>
           
           <div>

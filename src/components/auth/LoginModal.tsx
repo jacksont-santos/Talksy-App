@@ -15,10 +15,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
   const [error, setError] = useState('');
   const { login } = useAuth();
 
-  if (!isOpen) {
-    return null;
-  }
-
   useEffect(() => {
     const storedUsername = localStorage.getItem('username');
     if (storedUsername) setUsername(storedUsername);
@@ -35,9 +31,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
     
     login({ username: usernameFormatted, password })
       .then(() => onClose())
-      .catch((err) => setError("Usuário ou senha incorretos."));
+      .catch(() => setError("Usuário ou senha incorretos."));
   };
 
+  if (!isOpen) {
+    return null;
+  }
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fade-in">
       <div className="bg-white rounded-lg p-6 w-full max-w-md relative animate-slide-up shadow-xl">

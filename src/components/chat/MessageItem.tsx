@@ -1,14 +1,14 @@
 import React from 'react';
-import { Message } from '../../types/message';
+// import { Message } from '../../types/message';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface MessageItemProps {
-  message: Message;
+  message: any;
 }
 
 export const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
   const { authState } = useAuth();
-  const isCurrentUser = authState.user?.id === message.sender.id;
+  const isCurrentUser = authState.user?._id === message.sender.id;
   const isSystem = message.sender.id === 'system';
   
   const formattedTime = new Date(message.timestamp).toLocaleTimeString([], {
@@ -35,7 +35,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
         ${
           isCurrentUser 
             ? 'bg-indigo-600 text-white rounded-br-none' 
-            : 'bg-gray-200 text-gray-900 rounded-bl-none'
+            : 'bg-gray-100 dark:bg-zinc-900 text-gray-500 dark:text-gray-400 rounded-bl-none'
         }`}
       >
         {!isCurrentUser && (

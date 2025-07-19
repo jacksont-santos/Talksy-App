@@ -16,6 +16,7 @@ enum MessageType {
   SIGNIN_ROOM = 'signinRoom',
   SIGNOUT_ROOM = 'signoutRoom',
   SIGNIN_REPLY = 'signinReply',
+  UPDATE_ROOM_STATE = 'updateRoomState',
   ROOM_STATE = 'roomState',
   ROOMS_STATE = 'roomsState',
   CHAT = 'chat',
@@ -25,6 +26,7 @@ interface signParams {
   type: 'signinRoom' | 'signoutRoom';
   roomId: string;
   nickname: string;
+  password?: string;
   isPublic?: boolean;
   userId?: string;
 }
@@ -152,6 +154,7 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({
           roomId,
           nickname,
           public: isPublic,
+          token: localStorage.getItem(`room:${roomId}`)
         }
       }));
     };

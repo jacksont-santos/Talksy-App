@@ -67,9 +67,9 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="bg-white border-b border-gray-200 px-4 py-3 flex justify-between items-center shadow-sm">
+      <div className="bg-gray-100 dark:bg-zinc-800  border-t border-gray-200 dark:border-zinc-950 px-4 py-3 flex justify-between items-center shadow-sm">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">{room.name}</h2>
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">{room.name}</h2>
           <p className="text-sm text-gray-500">
             {usersNumber} / {room.maxUsers} Participantes
           </p>
@@ -82,9 +82,9 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         </button>
       </div>
       
-      <div className="flex-grow overflow-y-auto p-4 bg-gray-50">
+      <div className="flex-grow overflow-y-auto p-4 bg-gray-200 dark:bg-zinc-900">
         {roomMessages.length === 0 ? (
-          <div className="text-center text-gray-500 mt-10">
+          <div className="text-center text-gray-600 dark:text-gray-400 mt-10">
             Nenhuma mensagem ainda. Inicie a conversa!
           </div>
         ) : (

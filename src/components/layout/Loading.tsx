@@ -6,7 +6,6 @@ interface LoadingProps {
 }
 
 const Loading: React.FC<LoadingProps> = (props) => {
-  console.log(props.message)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-white">

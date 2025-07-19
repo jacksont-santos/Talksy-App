@@ -30,7 +30,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => 
   return (
     <form 
       onSubmit={handleSubmit}
-      className="p-4 border-t border-gray-200 bg-white"
+      className="p-4 border-t border-gray-200 dark:border-zinc-950 bg-gray-50 dark:bg-zinc-800"
     >
       <div className="flex items-center">
         <input

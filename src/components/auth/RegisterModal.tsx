@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { X } from 'lucide-react';
 import { Input } from '../common/Input';
 import { Button } from '../common/Button';
 
@@ -22,7 +21,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose })
     else if (usernameFormatted.length < 6) 
         setError("Usuário deve ter pelo menos 6 caracteres.");
     else {
-        localStorage.setItem('username', usernameFormatted);
+        localStorage.setItem('nickname', usernameFormatted);
         onClose();
         setError('');
     }
@@ -30,15 +29,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose })
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fade-in">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md relative animate-slide-up shadow-xl">
-        {/* <button 
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors"
-          aria-label="Close"
-        >
-          <X size={24} />
-        </button> */}
-        
+      <div className="bg-white rounded-lg p-6 w-full max-w-md relative animate-slide-up shadow-xl">        
         <div className="text-sm text-gray-600 mb-6">
             Por favor, informe um nome de usuário para continuar. Este nome será usado para identificar você nas salas de bate-papo.
         </div>

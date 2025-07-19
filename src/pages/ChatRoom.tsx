@@ -35,6 +35,10 @@ export const ChatRoomPage: React.FC = () => {
   useEffect(() => {
     loadingService.showLoader();
     joinRoom();
+    // return () => {
+    //   if (roomId)
+    //     localStorage.removeItem(`room:${roomId}`);
+    // }
   }, []);
 
     const joinRoom = async () => {
@@ -52,7 +56,7 @@ export const ChatRoomPage: React.FC = () => {
       return navigate("/");
 
     setRoom(roomData);
-    const nickname = localStorage.getItem("username");
+    const nickname = localStorage.getItem("nickname");
     if (nickname) setNickname(nickname);
     else setOpenModal(true);
 
@@ -100,12 +104,16 @@ export const ChatRoomPage: React.FC = () => {
         break;
       case "signinReply":
         const { token } = data;
-        if (token) setWsToken(token);
+        if (token) {
+          localStorage.setItem(`room:${roomId}`, token);
+          setWsToken(token);
+        };
         getRoomState(roomId, authState.user?._id);
         setHasJoined(true);
         break;
       case "signoutRoom":
-        showToast("info", `${nickname} saiu da sala.`);
+        showToast("info", `${nickname} deixou a sala.`);
+        setRoomState(users);
         break;
     };
   };

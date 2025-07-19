@@ -49,7 +49,7 @@ export const Home: React.FC = () => {
         ...list,
         ...response.data
       ]));
-      connectPublic();
+      if (!authState.isAuthenticated) connectPublic();
       getRoomsState();
     })
     .catch((error) => {
@@ -86,13 +86,12 @@ export const Home: React.FC = () => {
       });
     }
     else {
-      const username = localStorage.getItem('username');
-      if (username) setNickname(username);
-      else setIsRegisterModalOpen(true);
-
       setPrivateRooms([]);
       setFetchedPrivateRooms(true);
     };
+    const savedNickname = localStorage.getItem('nickname');
+    if (savedNickname) setNickname(savedNickname);
+    else setIsRegisterModalOpen(true);
   }, [connected, authState.isAuthenticated]);
 
   useEffect(() => {
@@ -123,8 +122,8 @@ export const Home: React.FC = () => {
 
   const onCloseRegisterModal = () => {
     setIsRegisterModalOpen(false);
-    const username = localStorage.getItem('username');
-    if (username) setNickname(username);
+    const savedNickname = localStorage.getItem('nickname');
+    if (savedNickname) setNickname(savedNickname);
   };
 
   const setNotification = (notification: notification) => {
@@ -169,9 +168,19 @@ export const Home: React.FC = () => {
           );
         });
         break;
+      case "updateRoomState":
+        const { users } = data;
+        setRoomsState((state) => {
+          state.set(roomId, users);
+          return state;
+        });
+        break;
       case "signinReply":
         const { token } = data;
-        if (token) setWsToken(token);
+        if (token) {
+          localStorage.setItem(`room:${roomId}`, token);
+          setWsToken(token);
+        };
         const room = rooms.find((room) => room._id === roomId);
         if (!room) return;
         navigate(`/${room.public ? 'public' : 'private'}/${room._id}`);
@@ -181,12 +190,9 @@ export const Home: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* <RoomList rooms={rooms} authState={authState} /> */}
     <div>
       {authState.isAuthenticated && (
       <div className="flex justify-end items-center mb-6 w-full">
-        {/* <h1 className="text-2xl font-bold text-gray-900">Salas disponíneis</h1> */}
-        
           <Button 
             onClick={() => {
               setEditingRoom(null);
@@ -202,7 +208,7 @@ export const Home: React.FC = () => {
       
       {publicRooms.length > 0 && (
         <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">Salas publicas</h2>
+        <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">Salas publicas</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {publicRooms.map(room => (
           <RoomCard

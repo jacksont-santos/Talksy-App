@@ -8,20 +8,33 @@ type LoadingContextType = {
   hideLoader: () => void;
 };
 
+const timer = (time: number) => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(true);
+      }, time);
+    });
+  }
+
 const LoadingContext = createContext<LoadingContextType | undefined>(undefined);
 
 export const LoadingProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
-  const [message, setMessage] = useState<string>();
+  const [message, setNewMessage] = useState<string>();
 
   const showLoader = () => {
-    setMessage(undefined);
+    setNewMessage(undefined);
     setIsLoading(true)
   };
-  const hideLoader = () => {
+  const hideLoader = async () => {
+    await timer(400);
     setIsLoading(false);
   };
 
+  const setMessage = async (message: string) => {
+    await timer(400);
+    setNewMessage(message);
+  };
 
   return (
     <LoadingContext.Provider value={{ isLoading, setMessage, showLoader, hideLoader }}>

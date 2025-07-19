@@ -40,9 +40,9 @@ export const RoomCard: React.FC<RoomCardProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-4 transition-all duration-300 hover:shadow-lg border border-gray-100 hover:border-indigo-200">
-      <div className="flex justify-between items-start mb-2">
-        <h3 className="text-lg font-semibold text-gray-900">{room.name}</h3>
+    <div className="bg-gray-50 dark:bg-zinc-900 rounded-lg shadow-md p-4 transition-all duration-300 hover:shadow-lg border border-gray-100 dark:border-gray-950 hover:border-indigo-200">
+      <div className="flex justify-between items-center mb-2">
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">{room.name}</h3>
         <div className="flex items-center space-x-2">
           {!room.public && (
             <span title='Sala privada'><Lock size={16} className="text-gray-500" /></span>
