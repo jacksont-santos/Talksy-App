@@ -75,7 +75,7 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      <div className="fixed top-[70px] right-[40px] z-50 flex flex-col gap-2">
+      <div className="fixed top-[140px] right-[40px] z-50 flex flex-col gap-2">
         {toast && display && (
           <div
             className={`${type[toast.type]} px-4 py-3 rounded-lg shadow-lg flex items-center justify-between min-w-[250px] ${animationStarted ? "duration-300 ease-out opacity-0 translate-y-4" : "opacity-1"} transition-all`}

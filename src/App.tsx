@@ -6,6 +6,7 @@ import { ChatRoomPage } from './pages/ChatRoom';
 import { AuthProvider } from './contexts/AuthContext';
 import { WebSocketProvider } from './contexts/WebSocketContext';
 import { LoadingProvider } from './contexts/LoadingContext';
+import { RoomMemoryHandler } from './components/rooms/RoomMemoryHandler';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <WebSocketProvider>
           <Router>
             <div className="flex flex-col min-h-screen bg-gray-200 dark:bg-zinc-950">
+              <RoomMemoryHandler />
               <Navbar />
               <main className="flex-grow">
                 <ToastProvider>

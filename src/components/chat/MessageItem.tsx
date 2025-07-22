@@ -1,17 +1,18 @@
 import React from 'react';
-// import { Message } from '../../types/message';
 import { useAuth } from '../../contexts/AuthContext';
+import { Message } from './ChatWindow';
 
 interface MessageItemProps {
-  message: any;
+  message: Message;
+  currentUserNamer: string;
 }
 
-export const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
+export const MessageItem: React.FC<MessageItemProps> = ({ message, currentUserNamer }) => {
   const { authState } = useAuth();
-  const isCurrentUser = authState.user?._id === message.sender.id;
-  const isSystem = message.sender.id === 'system';
+  const isCurrentUser = currentUserNamer === message.nickname;
+  const isSystem = message.id === 'system';
   
-  const formattedTime = new Date(message.timestamp).toLocaleTimeString([], {
+  const formattedTime = new Date(message.createdAt).toLocaleTimeString([], {
     hour: '2-digit',
     minute: '2-digit'
   });
@@ -35,11 +36,11 @@ export const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
         ${
           isCurrentUser 
             ? 'bg-indigo-600 text-white rounded-br-none' 
-            : 'bg-gray-100 dark:bg-zinc-900 text-gray-500 dark:text-gray-400 rounded-bl-none'
+            : 'bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-gray-400 rounded-bl-none'
         }`}
       >
         {!isCurrentUser && (
-          <div className="font-semibold text-sm mb-1">{message.sender.nickname}</div>
+          <div className="font-semibold text-sm mb-1">{message.nickname}</div>
         )}
         <div>{message.content}</div>
         <div className={`text-xs ${isCurrentUser ? 'text-indigo-200' : 'text-gray-500'} text-right mt-1`}>

@@ -14,3 +14,8 @@ export interface FormRoom {
   maxUsers: number;
   password?: string;
 }
+
+export interface StoredRoom {
+  id: string
+  token: string
+}

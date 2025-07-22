@@ -25,10 +25,6 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
   // const [hasPassword, setHasPassword] = useState(false);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  
-  const { authState } = useAuth();
-
-  const MAX_USERS_LIMIT = 10;
 
   useEffect(() => {
     if (room) {
@@ -49,12 +45,12 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
     e.preventDefault();
     
     if (!name) {
-      setError('Room name is required');
+      setError('Nome da sala é obrigatório');
       return;
     }
     
-    if (!isPublic && !password && !room) {
-      setError('Password is required for private rooms');
+    if (!isPublic &&  !password && !room) {
+      setError('Senha é obrigatória para salas privadas');
       return;
     }
     
@@ -63,7 +59,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
       active,
       isPublic,
       maxUsers,
-      password,
+      password: password ? password : undefined,
     };
     
     onSave(newRoom);
@@ -81,7 +77,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
         </button>
         
         <h2 className="text-2xl font-bold text-gray-900 mb-6">
-          {room ? 'Edit Room' : 'Create New Room'}
+          {room ? 'Editar Sala' : 'Criar Nova Sala'}
         </h2>
         
         {error && (
@@ -92,7 +88,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
         
         <form onSubmit={handleSubmit}>
           <Input
-            label="Room Name"
+            label="Título da sala"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
@@ -106,7 +102,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                 onChange={(e) => setIsActive(e.target.checked)}
                 className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
               />
-              <span className="ml-2 text-sm text-gray-700">Active</span>
+              <span className="ml-2 text-sm text-gray-700">Ativa</span>
             </label>
           </div>
           
@@ -118,12 +114,12 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                 onChange={(e) => setIsPublic(e.target.checked)}
                 className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
               />
-              <span className="ml-2 text-sm text-gray-700">Public</span>
+              <span className="ml-2 text-sm text-gray-700">Publica</span>
             </label>
           </div>
           
           <Input
-            label="Maximum Users"
+            label="Limite de usuários"
             type="number"
             value={maxUsers.toString()}
             onChange={(e) => setMaxUsers(parseInt(e.target.value) || 0)}
@@ -132,7 +128,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
           
           {!isPublic && (
             <Input
-              label={room ? 'New Password (leave empty to keep current)' : 'Password'}
+              label={room ? 'Nova senha (deixe em branco para manter a atual)' : 'Senha'}
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -147,10 +143,10 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
               onClick={onClose}
               className="mr-2"
             >
-              Cancel
+              Cancelar
             </Button>
             <Button type="submit" variant="primary">
-              {room ? 'Update Room' : 'Create Room'}
+              {room ? 'Atualizar Sala' : 'Criar Sala'}
             </Button>
           </div>
         </form>

@@ -1,29 +1,42 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { MessageItem } from './MessageItem';
 import { MessageInput } from './MessageInput';
-import { useWebSocket } from '../../contexts/WebSocketContext';
+import { useWebSocket, notification } from '../../contexts/WebSocketContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { Room } from '../../types/room';
 import { roomService } from '../../services/roomService';
+import { ArrowDownIcon } from 'lucide-react';
 
 interface ChatWindowProps {
   room: Room;
   nickname: string;
+  token: string;
   usersNumber?: number;
   onLeave: () => void;
+}
+
+export interface Message {
+  id: string;
+  content: string;
+  nickname: string;
+  createdAt: string
 }
 
 export const ChatWindow: React.FC<ChatWindowProps> = ({
   room,
   nickname,
+  token,
   usersNumber = 0,
   onLeave
 }) => {
   
-  const { sendMessage } = useWebSocket();
+  const { sendMessage, notifications, checkNotification } = useWebSocket();
   const { authState } = useAuth();
-  const [roomMessages, setRoomMessages] = useState<{ id: string; content: string; sender: string }[]>([]);
+  const [roomMessages, setRoomMessages] = useState<Message[]>([]);
+  const [ iteractivityInited, setIteractivityInited ] = useState(false);
+  const [ loadingMoreMessages, setLoadingMoreMessages ] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const container = useRef<HTMLDivElement>(null);
 
   const [ page, setPage ] = useState(1);
   const [ limit ] = useState(20);
@@ -36,20 +49,60 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       } catch (error) {
         console.error('Error fetching room messages:', error);
       }
-    }
+    };
     fetchMessages();
+    container.current?.addEventListener('scroll', () => {
+      if (container.current?.scrollTop === 0) {
+        setPage(prevPage => prevPage + 1);
+      };
+    });
   }, []);
+
+  useEffect(() => {
+    if (page == 1) return;
+    handleLoadMore();
+  }, [page]);
   
   useEffect(() => {
-    // Scroll to bottom when messages change
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (roomMessages.length === 0 || iteractivityInited) return;
+    setIteractivityInited(true);
+    goToBottom();
   }, [roomMessages]);
+
+  useEffect(() => {
+    if (notifications.length) {
+      setNotification(notifications[0]);
+    };
+  }, [notifications]);
+
+  const setNotification = (notification: notification) => {
+    const { type, data } = notification;
+    if (type !== 'chat') return;
+    const { id, roomId, content, nickname, createdAt } = data;
+    checkNotification();
+    if (roomId !== room._id) return;
+    setRoomMessages(prevMessages => [...prevMessages, { id, content, nickname, createdAt }]);
+  };
 
   const handleLoadMore = async () => {
     try {
-      const response = await roomService.getRoomMessages(room._id, page + 1, limit);
-      setRoomMessages(prevMessages => [...prevMessages, ...response.data.messages]);
-      setPage(prevPage => prevPage + 1);
+      if (loadingMoreMessages) return;
+      setLoadingMoreMessages(true);
+
+      const previousScrollHeight = container.current?.scrollHeight || 0;;
+
+      const response = await roomService.getRoomMessages(room._id, page, limit);
+      if (response.data.length === 0) {
+        setLoadingMoreMessages(false);
+        return;
+      };
+      setRoomMessages(prevMessages => [...response.data, ...prevMessages]);
+      setTimeout(() => {
+        const newScrollHeight = container.current?.scrollHeight || 0;
+        const heightDiff = newScrollHeight - previousScrollHeight || 0;
+        if (container.current) container.current.scrollTop = heightDiff;
+      }, 0);
+      setLoadingMoreMessages(false);
     } catch (error) {
       console.error('Error loading more messages:', error);
     }
@@ -61,8 +114,13 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         roomId: room._id,
         content,
         nickname,
+        token,
         userId: authState.user?._id
       });
+  };
+
+  const goToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
@@ -82,19 +140,27 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         </button>
       </div>
       
-      <div className="flex-grow overflow-y-auto p-4 bg-gray-200 dark:bg-zinc-900">
+      <div ref={container} className="flex-grow overflow-y-auto p-4 bg-[#c0f1ba57] dark:bg-[#2f302f57]">
         {roomMessages.length === 0 ? (
           <div className="text-center text-gray-600 dark:text-gray-400 mt-10">
             Nenhuma mensagem ainda. Inicie a conversa!
           </div>
         ) : (
           roomMessages.map(message => (
-            <MessageItem key={message.id} message={message} />
+            <MessageItem
+              key={message.id}
+              currentUserNamer={nickname}
+              message={message}
+            />
           ))
         )}
-        <div ref={messagesEndRef} />
+        <div ref={messagesEndRef}/>
       </div>
-      
+      <button
+        onClick={goToBottom}
+        className="bg-gray-600 text-white px-3 py-3 fixed bottom-24 right-4 rounded-md hover:bg-indigo-700 transition-colors">
+          <ArrowDownIcon size={14} />
+        </button>
       <MessageInput onSendMessage={handleSendMessage} />
     </div>
   );

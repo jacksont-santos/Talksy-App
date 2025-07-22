@@ -10,6 +10,7 @@ import { CreateRoomModal } from '../components/rooms/CreateRoomModal';
 import { PlusCircle } from 'lucide-react';
 import { useLoading } from '../contexts/LoadingContext';
 import { RegisterModal } from '../components/auth/RegisterModal';
+import { StoredRoom } from '../types/room';
 
 export const Home: React.FC = () => {
 
@@ -41,7 +42,7 @@ export const Home: React.FC = () => {
 
   useEffect(() => {
     loadingService.showLoader();
-    if (!connected) return;
+    if (!connected || authState.isLoading) return;
     
     roomService.getPublicRooms()
     .then((response) => {
@@ -50,7 +51,7 @@ export const Home: React.FC = () => {
         ...response.data
       ]));
       if (!authState.isAuthenticated) connectPublic();
-      getRoomsState();
+      // getRoomsState();
     })
     .catch((error) => {
       if (error.status !== 404)
@@ -59,7 +60,7 @@ export const Home: React.FC = () => {
     .finally(() => {
       setFetchedPublicRooms(true);
     });
-  }, [connected]);
+  }, [connected, authState.isLoading]);
 
   useEffect(() => {
     if (!connected) return;
@@ -75,7 +76,7 @@ export const Home: React.FC = () => {
           ...response.data
         ]));
         connectPrivate(authState.user!._id);
-        getRoomsState(authState.user!._id);
+        // getRoomsState(authState.user!._id);
       })
       .catch((error) => {
         if (error.status !== 404)
@@ -132,7 +133,7 @@ export const Home: React.FC = () => {
     const { _id: roomId, public: isPublic } = data;
 
     const rooms = publicRooms.concat(privateRooms);
-    const setRoom = isPublic ? setPrivateRooms : setPublicRooms;
+    const setRoom = isPublic ? setPublicRooms : setPrivateRooms;
 
     switch (type) {
       case 'addRoom':
@@ -146,9 +147,9 @@ export const Home: React.FC = () => {
 
       case "updateRoom":
         setRoom((list) => {
-          return list.map((room) => {
-            return room._id === roomId ? data : room;
-          });
+          const newList = list.map((room) => room._id === roomId ? data : room);
+          console.log(newList)
+          return newList;
         });
         break;
 
@@ -176,14 +177,30 @@ export const Home: React.FC = () => {
         });
         break;
       case "signinReply":
-        const { token } = data;
-        if (token) {
-          localStorage.setItem(`room:${roomId}`, token);
-          setWsToken(token);
-        };
         const room = rooms.find((room) => room._id === roomId);
         if (!room) return;
-        navigate(`/${room.public ? 'public' : 'private'}/${room._id}`);
+        const { token } = data;
+        if (token) {
+          // const storedToken = localStorage.getItem(roomId);
+          // if (!storedToken) localStorage.setItem(roomId, token);
+          // let data = localStorage.getItem('rooms');
+          // const storedRooms = data ? JSON.parse(data) : [];
+          // if (!storedRooms.includes(roomId)) {
+          //   storedRooms.push(roomId);
+          //   localStorage.setItem('rooms', JSON.stringify(storedRooms));
+          // };
+          const storedRooms = localStorage.getItem('rooms');
+          if (storedRooms) {
+            const rooms: StoredRoom[] = JSON.parse(storedRooms);
+            const room = rooms.find((item) => item.id === roomId);
+            if (room) room.token = token;
+            else rooms.push({id: roomId, token });
+            localStorage.setItem('rooms', JSON.stringify(rooms) );
+          }
+          else localStorage.setItem('rooms', JSON.stringify([{id: roomId, token }]) );
+          setWsToken(token);
+          navigate(`/${room.public ? 'public' : 'private'}/${room._id}`);
+        };
         break;
     };
   };

@@ -14,28 +14,43 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
     isAuthenticated: false,
+    isLoading: true,
   });
 
   useEffect(() => {
+    init();
+  }, []);
+
+  const init = async () => {
     const authToken = localStorage.getItem('authToken');
-    if (authToken)
-      userService.getUser()
+    if (authToken) {
+      await userService.getUser()
         .then((response) => {
           const user = response.data;
           if (user)
             setAuthState({
               user,
               isAuthenticated: true,
+              isLoading: false,
             });
         })
         .catch(() => {
           setAuthState({
             user: null,
             isAuthenticated: false,
-          });
+            isLoading: false,
+          })
           localStorage.removeItem('authToken');
         });
-  }, []);
+    }
+    else {
+      setAuthState({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+      });
+    };
+  }
 
   const login = async (authData: userAuth) => {
     return userService.signin(authData)
@@ -48,7 +63,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setAuthState({
         user: { _id: user._id, username: user.username },
         isAuthenticated: true,
+        isLoading: false,
       });
+    })
+    .catch(() => {
+      setAuthState({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+      })
     });
   };
 
@@ -56,6 +79,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setAuthState({
       user: null,
       isAuthenticated: false,
+      isLoading: false,
     });
     localStorage.removeItem('authToken');
   };

@@ -6,8 +6,9 @@ import React, {
   ReactNode,
   useRef,
 } from "react";
+import { StoredRoom } from "../types/room";
 
-enum MessageType {
+export enum MessageType {
   PUBLIC = 'public',
   PRIVATE = 'private',
   ADD_ROOM = 'addRoom',
@@ -35,6 +36,7 @@ interface messageParams {
   roomId: string,
   content: string,
   nickname: string,
+  token: string,
   userId?: string
 }
 
@@ -48,7 +50,7 @@ interface WebSocketContextType {
   connectPrivate: (userId: string) => void;
   signRoom: (params: signParams) => void;
   sendMessage: (params: messageParams) => void;
-  getRoomState: (roomId: string, userId?: string) => void;
+  getRoomState: (roomId: string) => void;
   getRoomsState: (userId?: string) => void;
   checkNotification: () => void;
   setWsToken: (token: string) => void;
@@ -144,9 +146,13 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({
     roomId,
     nickname,
     isPublic = true,
-    userId
+    userId,
   }: signParams) => {
     if (socket.current?.readyState) {
+      // let token = localStorage.getItem('authToken');
+      const storedRooms = localStorage.getItem('rooms');
+      const data = storedRooms ? JSON.parse(storedRooms) : [];
+      const wsTokenStored = data?.find((item: StoredRoom) => item.id === roomId)?.token;
       socket.current?.send(JSON.stringify({
         type,
         userId,
@@ -154,7 +160,7 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({
           roomId,
           nickname,
           public: isPublic,
-          token: localStorage.getItem(`room:${roomId}`)
+          token: wsTokenStored
         }
       }));
     };
@@ -162,6 +168,7 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({
   const sendMessage = ({
     roomId,
     content,
+    token,
     nickname,
     userId
   }: messageParams) => {
@@ -169,16 +176,18 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({
       const message = {
         roomId,
         content,
+        token,
         nickname,
       };
       socket.current?.send(JSON.stringify({ type: "chat", userId, data: message }));
     }
   };
-  const getRoomState = (roomId: string, userId?: string) => {
+  const getRoomState = (roomId: string) => {
     if (socket.current?.readyState) {
+      const authToken = localStorage.getItem('authToken');
       socket.current?.send(JSON.stringify({
         type: MessageType.ROOM_STATE, 
-        userId,
+        authToken,
         data: { roomId }
       }));
     }
