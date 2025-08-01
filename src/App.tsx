@@ -1,12 +1,11 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Navbar } from './components/layout/Navbar';
 import { ToastProvider } from './components/common/ToasterProvider';
-import { Home } from './pages/Home';
-import { ChatRoomPage } from './pages/ChatRoom';
+import { HomePage } from './components/room/Home';
 import { AuthProvider } from './contexts/AuthContext';
 import { WebSocketProvider } from './contexts/WebSocketContext';
 import { LoadingProvider } from './contexts/LoadingContext';
-import { RoomMemoryHandler } from './components/rooms/RoomMemoryHandler';
+import { RoomMemoryHandler } from './components/room/RoomMemoryHandler';
 
 function App() {
   return (
@@ -14,15 +13,12 @@ function App() {
       <LoadingProvider>
         <WebSocketProvider>
           <Router>
-            <div className="flex flex-col min-h-screen bg-gray-200 dark:bg-zinc-950">
+            <div className="flex flex-col w-screen h-screen overflow-hidden bg-gray-300 dark:bg-[#161616]">
               <RoomMemoryHandler />
-              <Navbar />
-              <main className="flex-grow">
+              <main className="flex-grow h-[100vh] overflow-hidden">
                 <ToastProvider>
                   <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/private/:roomId" element={<ChatRoomPage />} />
-                    <Route path="/public/:roomId" element={<ChatRoomPage />} />
+                    <Route path="/" element={<HomePage />} />
                   </Routes>
                 </ToastProvider>
               </main>

@@ -21,7 +21,7 @@ export default function ThemeToggle() {
     <button
       onClick={() => setDark(!dark)}
       className="
-        font-bold text-zinc-800 dark:text-white hover:text-zinc-200 dark:hover:text-gray-400
+        font-bold text-sm text-gray-800 dark:text-gray-200
         flex items-center px-3 py-1 rounded transition-colors
       "
     >

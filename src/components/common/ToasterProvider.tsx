@@ -36,7 +36,7 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
         resolve(true);
       }, time);
     });
-  }
+  };
 
   const showToast = (
     type: 'info' | 'success' | 'error' | 'warning',

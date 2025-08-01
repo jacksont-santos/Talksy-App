@@ -11,19 +11,10 @@ export const Navbar: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <nav className="bg-indigo-700 dark:bg-zinc-900 text-white shadow-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex items-center">
-            <MessageSquare size={24} className="mr-2" />
-            <span 
-              className="text-xl font-bold cursor-pointer transition-all hover:text-indigo-200"
-              onClick={() => navigate('/')}
-            >
-              Talksy
-            </span>
-            <ThemeToggle />
-          </div>
+    <nav className="bg-zinc-300 dark:bg-zinc-900 text-white shadow-md flex justify-between items-center h-[10%]">
+      {/* <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"> */}
+        {/* <div className=""> */}
+          
           
           <div>
             {authState.isAuthenticated ? (
@@ -50,8 +41,8 @@ export const Navbar: React.FC = () => {
               </button>
             )}
           </div>
-        </div>
-      </div>
+        {/* </div> */}
+      {/* </div> */}
       
       <LoginModal 
         isOpen={isLoginModalOpen} 

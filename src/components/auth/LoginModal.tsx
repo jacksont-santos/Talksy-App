@@ -38,8 +38,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
     return null;
   }
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fade-in">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md relative animate-slide-up shadow-xl">
+    <div className="fixed inset-0 bg-black bg-opacity-[0.7] flex items-center justify-center z-50 animate-fade-in">
+      <div className="bg-gray-100 dark:bg-zinc-900 text-gray-800 dark:text-gray-200 rounded-lg p-6 w-full max-w-md relative animate-slide-up shadow-xl">
         <button 
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors"
@@ -48,7 +48,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
           <X size={24} />
         </button>
         
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Autenticação</h2>
+        <h2 className="text-2xl font-bold mb-6">Autenticação</h2>
         
         {error && (
           <div className="mb-4 p-2 bg-red-100 border border-red-400 text-red-700 text-center rounded">

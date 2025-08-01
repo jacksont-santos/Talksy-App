@@ -6,6 +6,7 @@ import { useWebSocket } from '../../contexts/WebSocketContext';
 
 interface RoomCardProps {
   room: Room;
+  onJoin: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
   isOwner: boolean;
@@ -15,32 +16,16 @@ interface RoomCardProps {
 }
 
 export const RoomCard: React.FC<RoomCardProps> = ({ 
-  room, 
+  onJoin,
   onEdit, 
   onDelete,
+  room,
   isOwner,
   usersNumber = 0,
-  nickname = '',
-  userId,
 }) => {
-  const { connected, signRoom } = useWebSocket();
-
-  const handleJoin = () => {
-    if (!connected) {
-      alert('Conexão com o servidor não estabelecida. Tente novamente mais tarde.');
-      return;
-    };
-    signRoom({
-      type: 'signinRoom',
-      roomId: room._id,
-      nickname: nickname,
-      isPublic: room.public,
-      userId: userId,
-    });
-  };
 
   return (
-    <div className="bg-gray-50 dark:bg-zinc-900 rounded-lg shadow-md p-4 transition-all duration-300 hover:shadow-lg border border-gray-100 dark:border-gray-950 hover:border-indigo-200">
+    <div className="bg-gray-100 dark:bg-zinc-800 rounded-lg shadow-md p-4 transition-all duration-300 hover:shadow-lg border border-gray-100 dark:border-gray-950 hover:border-indigo-200">
       <div className="flex justify-between items-center mb-2">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">{room.name}</h3>
         <div className="flex items-center space-x-2">
@@ -62,7 +47,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({
       
       <div className="flex justify-between items-center">
         <Button 
-          onClick={handleJoin} 
+          onClick={onJoin} 
           disabled={!room.active}
           variant={room.active ? 'primary' : 'secondary'}
           size="sm"

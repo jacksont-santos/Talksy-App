@@ -36,7 +36,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({ message, currentUserNa
         ${
           isCurrentUser 
             ? 'bg-indigo-600 text-white rounded-br-none' 
-            : 'bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-gray-400 rounded-bl-none'
+            : 'bg-green-100 dark:bg-[#2f302f57] text-gray-500 dark:text-gray-400 rounded-bl-none'
         }`}
       >
         {!isCurrentUser && (

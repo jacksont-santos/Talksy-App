@@ -7,17 +7,18 @@ import { Room } from '../../types/room';
 interface JoinRoomModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onJoin: (nickname: string, password?: string) => void;
-  room: Room;
+  onJoin: (password?: string) => void;
+  roomName: string;
 }
 
 export const JoinRoomModal: React.FC<JoinRoomModalProps> = ({ 
   isOpen, 
   onClose, 
   onJoin,
-  room 
+  roomName,
+  // room 
 }) => {
-  const [nickname, setNickname] = useState('');
+  // const [nickname, setNickname] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
@@ -28,22 +29,22 @@ export const JoinRoomModal: React.FC<JoinRoomModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!nickname) {
-      setError('Nickname is required');
+    // if (!nickname) {
+    //   setError('Nickname is required');
+    //   return;
+    // }
+    
+    if (!password) {
+      setError('Sala protegida por senha');
       return;
     }
     
-    if (!room.public && !password) {
-      setError('Password is required for this room');
-      return;
-    }
-    
-    onJoin(nickname, password);
+    onJoin(password);
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fade-in">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md relative animate-slide-up shadow-xl">
+    <div className="fixed inset-0 bg-black bg-opacity-[0.7] flex items-center justify-center z-50 animate-fade-in">
+      <div className="bg-gray-100 dark:bg-zinc-900 text-gray-800 dark:text-gray-200 rounded-lg p-6 w-full max-w-md relative animate-slide-up shadow-xl">
         <button 
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors"
@@ -52,8 +53,8 @@ export const JoinRoomModal: React.FC<JoinRoomModalProps> = ({
           <X size={24} />
         </button>
         
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Join {room.name}</h2>
-        <p className="text-gray-600 mb-6">Please enter a nickname to join this room.</p>
+        <h3 className="text-2xl font-bold text-gray-900 mb-2">{roomName}</h3>
+        {/* <p className="text-gray-600 mb-6">Please enter a nickname to join this room.</p> */}
         
         {error && (
           <div className="mb-4 p-2 bg-red-100 border border-red-400 text-red-700 rounded">
@@ -62,23 +63,23 @@ export const JoinRoomModal: React.FC<JoinRoomModalProps> = ({
         )}
         
         <form onSubmit={handleSubmit}>
-          <Input
+          {/* <Input
             label="Nickname"
             value={nickname}
             onChange={(e) => setNickname(e.target.value)}
             placeholder="Choose a nickname for this chat"
             required
-          />
+          /> */}
           
-          {!room.public && (
+          
             <Input
-              label="Room Password"
+              label="Senha"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-          )}
+          
           
           <div className="mt-6 flex justify-end">
             <Button 
@@ -87,10 +88,10 @@ export const JoinRoomModal: React.FC<JoinRoomModalProps> = ({
               onClick={onClose}
               className="mr-2"
             >
-              Cancel
+              Cancelar
             </Button>
             <Button type="submit" variant="primary">
-              Join Room
+              Entrar
             </Button>
           </div>
         </form>

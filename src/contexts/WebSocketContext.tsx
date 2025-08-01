@@ -9,50 +9,58 @@ import React, {
 import { StoredRoom } from "../types/room";
 
 export enum MessageType {
-  PUBLIC = 'public',
-  PRIVATE = 'private',
-  ADD_ROOM = 'addRoom',
-  UPDATE_ROOM = 'updateRoom',
-  REMOVE_ROOM = 'removeRoom',
-  SIGNIN_ROOM = 'signinRoom',
-  SIGNOUT_ROOM = 'signoutRoom',
-  SIGNIN_REPLY = 'signinReply',
-  UPDATE_ROOM_STATE = 'updateRoomState',
-  ROOM_STATE = 'roomState',
-  ROOMS_STATE = 'roomsState',
-  CHAT = 'chat',
+  PUBLIC = "public",
+  PRIVATE = "private",
+  ADD_ROOM = "addRoom",
+  UPDATE_ROOM = "updateRoom",
+  REMOVE_ROOM = "removeRoom",
+  SIGNIN_ROOM = "signinRoom",
+  SIGNOUT_ROOM = "signoutRoom",
+  SIGNIN_REPLY = "signinReply",
+  SIGNOUT_REPLY = "signoutReply",
+  SIGN_STATE = "signState",
+  UPDATE_ROOM_STATE = "updateRoomState",
+  ROOM_STATE = "roomState",
+  ROOMS_STATE = "roomsState",
+  CHAT = "chat",
 }
 
-interface signParams {
-  type: 'signinRoom' | 'signoutRoom';
+interface signinParams {
   roomId: string;
   nickname: string;
   password?: string;
   isPublic?: boolean;
-  userId?: string;
+}
+
+interface signoutParams {
+  roomId: string;
+  nickname: string;
 }
 
 interface messageParams {
-  roomId: string,
-  content: string,
-  nickname: string,
-  token: string,
-  userId?: string
+  roomId: string;
+  content: string;
+  nickname: string;
+  token: string;
+  userId?: string;
 }
 
 export interface notification {
-  type: MessageType,
-  data: any,
+  type: MessageType;
+  data: any;
+  id: string;
 }
 
 interface WebSocketContextType {
   connectPublic: () => void;
   connectPrivate: (userId: string) => void;
-  signRoom: (params: signParams) => void;
+  signinRoom: (params: signinParams) => void;
+  signoutRoom: (params: signoutParams) => void;
   sendMessage: (params: messageParams) => void;
+  getSignState: (_id: string, roomToken: string) => void;
   getRoomState: (roomId: string) => void;
   getRoomsState: (userId?: string) => void;
-  checkNotification: () => void;
+  checkNotification: (id: string) => void;
   setWsToken: (token: string) => void;
   wsToken: string;
   connected: boolean;
@@ -76,7 +84,7 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({
   const reconnectDelay = 2000;
 
   const [notifications, setNotifications] = useState<notification[]>([]);
-  const [wsToken, setWsToken] = useState('');
+  const [wsToken, setWsToken] = useState("");
 
   const connect = () => {
     const socketConnection = new WebSocket(WS_SERVER_URL);
@@ -87,7 +95,7 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({
           setReconnectAttempts((prev) => {
             const attempts = prev + 1;
             return attempts;
-        });
+          });
         }, reconnectDelay);
       }
     };
@@ -128,49 +136,62 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({
   //   }
   // }, [notifications]);
 
-  const checkNotification = () => {
-    if (notifications.length)
-      setNotifications(notificationsList => notificationsList.slice(1))
-  }
-
   const connectPublic = () => {
     if (socket.current?.readyState)
-      socket.current?.send(JSON.stringify({ type: "public" }));
+      socket.current?.send(JSON.stringify({ type: "connection" }));
   };
   const connectPrivate = (userId: string) => {
     if (socket.current?.readyState)
-      socket.current?.send(JSON.stringify({ type: "private", userId }));
+      socket.current?.send(JSON.stringify({ type: "connection", userId }));
   };
-  const signRoom = ({
-    type,
+  const signinRoom = ({
     roomId,
     nickname,
+    password,
     isPublic = true,
-    userId,
-  }: signParams) => {
+  }: signinParams) => {
     if (socket.current?.readyState) {
       // let token = localStorage.getItem('authToken');
-      const storedRooms = localStorage.getItem('rooms');
+      const storedRooms = localStorage.getItem("rooms");
       const data = storedRooms ? JSON.parse(storedRooms) : [];
-      const wsTokenStored = data?.find((item: StoredRoom) => item.id === roomId)?.token;
-      socket.current?.send(JSON.stringify({
-        type,
-        userId,
-        data: {
-          roomId,
-          nickname,
-          public: isPublic,
-          token: wsTokenStored
-        }
-      }));
-    };
+      const wsTokenStored = data?.find(
+        (item: StoredRoom) => item.id === roomId
+      )?.token;
+      socket.current?.send(
+        JSON.stringify({
+          type: MessageType.SIGNIN_ROOM,
+          data: {
+            roomId,
+            nickname,
+            password,
+            public: isPublic,
+            roomToken: wsTokenStored,
+          },
+        })
+      );
+    }
+  };
+  const signoutRoom = ({ roomId, nickname }: signoutParams) => {
+    if (socket.current?.readyState) {
+      const storedRooms = localStorage.getItem("rooms");
+      const data = storedRooms ? JSON.parse(storedRooms) : [];
+      const wsTokenStored = data?.find(
+        (item: StoredRoom) => item.id === roomId
+      )?.token;
+      socket.current?.send(
+        JSON.stringify({
+          type: MessageType.SIGNOUT_ROOM,
+          data: { roomId, nickname, roomToken: wsTokenStored },
+        })
+      );
+    }
   };
   const sendMessage = ({
     roomId,
     content,
     token,
     nickname,
-    userId
+    userId,
   }: messageParams) => {
     if (socket.current?.readyState) {
       const message = {
@@ -179,26 +200,52 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({
         token,
         nickname,
       };
-      socket.current?.send(JSON.stringify({ type: "chat", userId, data: message }));
+      socket.current?.send(
+        JSON.stringify({ type: "chat", userId, data: message })
+      );
     }
   };
+
   const getRoomState = (roomId: string) => {
     if (socket.current?.readyState) {
-      const authToken = localStorage.getItem('authToken');
-      socket.current?.send(JSON.stringify({
-        type: MessageType.ROOM_STATE, 
-        authToken,
-        data: { roomId }
-      }));
+      const authToken = localStorage.getItem("authToken");
+      socket.current?.send(
+        JSON.stringify({
+          type: MessageType.ROOM_STATE,
+          authToken,
+          data: { roomId },
+        })
+      );
     }
   };
+
   const getRoomsState = (userId?: string) => {
     if (socket.current?.readyState) {
-      socket.current?.send(JSON.stringify({
-        type: MessageType.ROOMS_STATE, 
-        userId
-      }));
+      socket.current?.send(
+        JSON.stringify({
+          type: MessageType.ROOMS_STATE,
+          userId,
+        })
+      );
     }
+  };
+
+  const getSignState = (_id: string, roomToken: string) => {
+    if (socket.current?.readyState) {
+      socket.current?.send(
+        JSON.stringify({
+          type: MessageType.SIGN_STATE,
+          data: { _id, roomToken },
+        })
+      );
+    }
+  };
+
+  const checkNotification = (id: string) => {
+    if (notifications.length)
+      setNotifications((notificationsList) =>
+        notificationsList.filter((notification) => notification.id !== id)
+      );
   };
 
   const onMessage = (message: string) => {
@@ -209,24 +256,27 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({
       {
         type,
         data,
+        id: crypto.randomUUID(),
       },
     ]);
-  }
+  };
 
   return (
     <WebSocketContext.Provider
       value={{
         connectPublic,
         connectPrivate,
-        signRoom,
-        sendMessage,
+        signinRoom,
+        signoutRoom,
+        getSignState,
         getRoomState,
         getRoomsState,
+        sendMessage,
         setWsToken,
         checkNotification,
         wsToken,
         connected,
-        notifications
+        notifications,
       }}
     >
       {children}
