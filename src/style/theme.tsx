@@ -1,5 +1,5 @@
-// src/components/ThemeToggle.tsx
 import { useEffect, useState } from "react";
+import { Sun, Moon } from "lucide-react";
 
 export default function ThemeToggle() {
   const [dark, setDark] = useState(() => {
@@ -18,14 +18,24 @@ export default function ThemeToggle() {
   }, [dark]);
 
   return (
-    <button
+    <div
       onClick={() => setDark(!dark)}
       className="
         font-bold text-sm text-gray-800 dark:text-gray-200
-        flex items-center px-3 py-1 rounded transition-colors
+        flex flex-col items-center rounded transition-colors cursor-pointer
       "
     >
-      {dark ? "☀️ Claro" : "🌙 Escuro"}
-    </button>
+      {dark ? (
+        <>
+        <Sun size={20} fill="#ffff32" color="#ffff32"/>
+        Claro
+        </>
+      ) : (
+        <>
+        <Moon size={20} fill="#e2e22d" color="#e2e22d"/>
+        Escuro
+        </>
+      )}
+    </div>
   );
 }

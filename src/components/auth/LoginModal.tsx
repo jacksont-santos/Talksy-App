@@ -39,7 +39,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
   }
   return (
     <div className="fixed inset-0 bg-black bg-opacity-[0.7] flex items-center justify-center z-50 animate-fade-in">
-      <div className="bg-gray-100 dark:bg-zinc-900 text-gray-800 dark:text-gray-200 rounded-lg p-6 w-full max-w-md relative animate-slide-up shadow-xl">
+      <div className="bg-gray-100 dark:bg-zinc-900 text-gray-800 dark:text-gray-200 rounded-lg p-6 w-full max-w-sm relative animate-slide-up shadow-xl">
         <button 
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors"
@@ -48,15 +48,19 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
           <X size={24} />
         </button>
         
-        <h2 className="text-2xl font-bold mb-6">Autenticação</h2>
+        <h2 className="text-xl font-semibold text-center">Login</h2>
+
+        <span className="text-sm text-gray-600 dark:text-gray-200">
+            Autentique-se para criar, editar, excluir e obter acesso às suas salas de bate-papo.
+        </span>
         
         {error && (
-          <div className="mb-4 p-2 bg-red-100 border border-red-400 text-red-700 text-center rounded">
+          <div className="mt-4 p-2 bg-red-100 border border-red-400 text-red-700 text-center rounded">
             {error}
           </div>
         )}
         
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className='mt-6'>
           <Input
             label="Usuário"
             value={username}
@@ -72,16 +76,21 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
             required
           />
           
-          <div className="mt-6 flex justify-end">
+          <div className="mt-6 flex justify-between">
             <Button 
               type="button" 
+              size='sm'
               variant="secondary" 
               onClick={onClose}
               className="mr-2"
             >
               Cancelar
             </Button>
-            <Button type="submit" variant="primary">
+            <Button
+              type="submit"
+              size='sm'
+              variant="primary"
+            >
               Entrar
             </Button>
           </div>

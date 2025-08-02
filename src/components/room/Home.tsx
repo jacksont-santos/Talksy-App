@@ -19,6 +19,9 @@ export const HomePage: React.FC = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
   const [loading, setLoading] = useState(false);
+  const [session, setSession] = useState<"public" | "private">(
+    (localStorage.getItem("session") || "public") as "public" | "private"
+  );
 
   const [room, setRoom] = useState<Room | null>(null);
   const [nickname, setNickname] = useState("");
@@ -75,14 +78,19 @@ export const HomePage: React.FC = () => {
     if (savedNickname) setNickname(savedNickname);
   };
 
+  const handleSession = (session: "public" | "private") => {
+    setSession(session);
+    localStorage.setItem("session", session);
+  };
+
   return (
     <div className="size-full">
       <div className="flex size-full flex ">
-        <Sidebar />
+        <Sidebar setSession={handleSession}/>
         <div className="flex-grow">
-          <Navbar />
+          <Navbar nickname={nickname} />
           <div className="flex overflow-hidden h-[90%]">
-            <RoomList onSelect={setRoom} setLoading={setLoading} />
+            <RoomList onSelect={setRoom} setLoading={setLoading} session={session} />
             <div className="flex-grow">
               {room && (
                 <ChatRoomPage

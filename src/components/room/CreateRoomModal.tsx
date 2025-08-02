@@ -3,7 +3,6 @@ import { X } from 'lucide-react';
 import { Input } from '../common/Input';
 import { Button } from '../common/Button';
 import { FormRoom, Room } from '../../types/room';
-import { useAuth } from '../../contexts/AuthContext';
 
 interface CreateRoomModalProps {
   isOpen: boolean;
@@ -67,7 +66,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-[0.7] flex items-center justify-center z-50 animate-fade-in">
-      <div className="bg-gray-100 dark:bg-zinc-900 text-gray-800 dark:text-gray-200 rounded-lg p-6 w-full max-w-md relative animate-slide-up shadow-xl">
+      <div className="bg-gray-100 dark:bg-zinc-900 text-gray-800 dark:text-gray-200 rounded-lg p-6 w-full max-w-sm relative animate-slide-up shadow-xl">
         <button 
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition-colors"
@@ -76,7 +75,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
           <X size={24} />
         </button>
         
-        <h2 className="text-2xl font-bold mb-6">
+        <h2 className="text-xl font-semibold mb-6 text-center">
           {room ? 'Editar Sala' : 'Criar Nova Sala'}
         </h2>
         
@@ -136,16 +135,17 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
             />
           )}
           
-          <div className="mt-6 flex justify-end">
+          <div className="mt-6 flex justify-between">
             <Button 
-              type="button" 
+              type="button"
+              size='sm'
               variant="secondary" 
               onClick={onClose}
               className="mr-2"
             >
               Cancelar
             </Button>
-            <Button type="submit" variant="primary">
+            <Button type="submit" size='sm' variant="primary">
               {room ? 'Atualizar Sala' : 'Criar Sala'}
             </Button>
           </div>

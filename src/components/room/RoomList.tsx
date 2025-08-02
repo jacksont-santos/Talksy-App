@@ -6,7 +6,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { Button } from "../common/Button";
 import { RoomCard } from "./RoomCard";
 import { CreateRoomModal } from "./CreateRoomModal";
-import { Plus } from "lucide-react";
+import { DeleteModal } from "./DeleteRoomModal";
 import { useLoading } from "../../contexts/LoadingContext";
 import { RegisterModal } from "../auth/RegisterModal";
 import { StoredRoom } from "../../types/room";
@@ -16,19 +16,22 @@ import { MessageType } from "../../contexts/WebSocketContext";
 interface RoomListProps {
   onSelect: (value: Room) => void;
   setLoading: (loading: boolean) => void;
+  session: "public" | "private";
 }
 
-export const RoomList: React.FC<RoomListProps> = ({ onSelect, setLoading }) => {
+export const RoomList: React.FC<RoomListProps> = ({
+  onSelect,
+  setLoading,
+  session,
+}) => {
   const loadingService = useLoading();
 
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
 
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
-  const [session, setSession] = useState<"public" | "private" | null>(
-    (localStorage.getItem("session") || "public") as "public" | "private"
-  );
 
   const [publicRooms, setPublicRooms] = useState<Room[]>([]);
   const [privateRooms, setPrivateRooms] = useState<Room[]>([]);
@@ -107,23 +110,26 @@ export const RoomList: React.FC<RoomListProps> = ({ onSelect, setLoading }) => {
     }
   }, [notifications]);
 
-  const saveRoom = (roomData: FormRoom) => {
-    if (selectedRoom) {
-      if (!isOwner(selectedRoom.ownerId)) return;
-      roomService.updateRoom(selectedRoom._id, roomData);
-    } else {
-      if (!authState.isAuthenticated) return;
-      roomService.createRoom(roomData);
-    }
+  const isOwner = (ownerId: string) => {
+    return authState.isAuthenticated && authState.user?._id === ownerId;
+  };
 
+  const saveRoom = (roomData: FormRoom) => {
+    if (!selectedRoom || !authState.isAuthenticated) return;
+    if (!isOwner(selectedRoom.ownerId)) return;
+
+    roomService.updateRoom(selectedRoom._id, roomData);
     setIsCreateModalOpen(false);
     setSelectedRoom(null);
   };
 
-  const deleteRoom = (room: Room) => {
-    if (!isOwner(room.ownerId)) return;
+  const deleteRoom = () => {
+    if (!selectedRoom || !authState.isAuthenticated) return;
+    if (!isOwner(selectedRoom.ownerId)) return;
 
-    roomService.deleteRoom(room._id);
+    roomService.deleteRoom(selectedRoom._id);
+    setIsDeleteModalOpen(false);
+    setSelectedRoom(null);
   };
 
   const handleJoinRoom = (room: Room) => {
@@ -144,10 +150,6 @@ export const RoomList: React.FC<RoomListProps> = ({ onSelect, setLoading }) => {
     setLoading(true);
     setSelectedRoom(null);
     setIsJoinModalOpen(false);
-  };
-
-  const isOwner = (ownerId: string) => {
-    return authState.isAuthenticated && authState.user?._id === ownerId;
   };
 
   const onCloseRegisterModal = () => {
@@ -201,7 +203,7 @@ export const RoomList: React.FC<RoomListProps> = ({ onSelect, setLoading }) => {
 
       case MessageType.REMOVE_ROOM:
         setRoom((list) => {
-          return list.filter((room) => room._id !== roomId);
+          return list.filter((room) => room._id !== data.roomId);
         });
         break;
       case MessageType.ROOMS_STATE:
@@ -262,32 +264,23 @@ export const RoomList: React.FC<RoomListProps> = ({ onSelect, setLoading }) => {
   return (
     <div className="min-w-[340px] overflow-hidden flex flex-col bg-gray-200 dark:bg-zinc-900">
       <div className="py-3 px-6 flex justify-between items-center w-full shadow-sm">
-        {authState.isAuthenticated && session == "private" ? (
-          <div onClick={() => setSession("public")}>
+        {session == "private" && (
+          <div>
             <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
-              ver salas publicas
+              Minhas salas
             </h3>
-            <p className="text-sm text-gray-500">{privateRooms.length} salas</p>
+            <p className="text-sm text-gray-500">
+              {authState.isAuthenticated ? privateRooms.length : 0} salas
+            </p>
           </div>
-        ) : (
-          <div onClick={() => setSession("private")}>
+        )}
+        {session == "public" && (
+          <div>
             <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
-              ver salas privadas
+              Salas públicas
             </h3>
             <p className="text-sm text-gray-500">{publicRooms.length} salas</p>
           </div>
-        )}
-        {authState.isAuthenticated && (
-          <button
-            title="Criar Sala"
-            onClick={() => {
-              setSelectedRoom(null);
-              setIsCreateModalOpen(true);
-            }}
-            className="p-1 text-white bg-indigo-700 hover:bg-indigo-800 rounded-full transition-colors"
-          >
-            <Plus size={26} />
-          </button>
         )}
       </div>
       <div className="overflow-y-auto px-6">
@@ -310,43 +303,60 @@ export const RoomList: React.FC<RoomListProps> = ({ onSelect, setLoading }) => {
                     setSelectedRoom(room);
                     setIsCreateModalOpen(true);
                   }}
-                  onDelete={() => deleteRoom(room)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-        {privateRooms.length > 0 && session == "private" && (
-          <div>
-            <div className="flex flex-col gap-4">
-              {privateRooms.map((room) => (
-                <RoomCard
-                  key={room._id}
-                  room={room}
-                  userId={authState.user?._id}
-                  nickname={nickname}
-                  usersNumber={roomsState.get(room._id) || 0}
-                  isOwner={
-                    authState.isAuthenticated &&
-                    authState.user?._id === room.ownerId
-                  }
-                  onJoin={() => handleJoinRoom(room)}
-                  onEdit={() => {
+                  onDelete={() => {
                     setSelectedRoom(room);
-                    setIsCreateModalOpen(true);
+                    setIsDeleteModalOpen(true);
                   }}
-                  onDelete={() => deleteRoom(room)}
                 />
               ))}
             </div>
           </div>
         )}
-        {!publicRooms.length && !privateRooms.length && (
+        {authState.isAuthenticated &&
+          privateRooms.length > 0 &&
+          session == "private" && (
+            <div>
+              <div className="flex flex-col gap-4">
+                {privateRooms.map((room) => (
+                  <RoomCard
+                    key={room._id}
+                    room={room}
+                    userId={authState.user?._id}
+                    nickname={nickname}
+                    usersNumber={roomsState.get(room._id) || 0}
+                    isOwner={
+                      authState.isAuthenticated &&
+                      authState.user?._id === room.ownerId
+                    }
+                    onJoin={() => handleJoinRoom(room)}
+                    onEdit={() => {
+                      setSelectedRoom(room);
+                      setIsCreateModalOpen(true);
+                    }}
+                    onDelete={() => {
+                      setSelectedRoom(room);
+                      setIsDeleteModalOpen(true);
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+          {session == "private" && !authState.isAuthenticated && (
           <div className="flex flex-col items-center justify-center size-full">
-            <span className="mt-4 text-blue-600 dark:text-gray-500 text-lg font-medium">
+            <span className="mt-4 text-gray-600 dark:text-gray-500 text-md">
+              Faça login para ver suas salas privadas.
+            </span>
+            </div>
+            )}
+        {
+          session == "public" && !publicRooms.length ||
+          session == "private" && !privateRooms.length && authState.isAuthenticated && (
+          <div className="flex flex-col items-center justify-center size-full">
+            <span className="mt-4 text-gray-600 dark:text-gray-500 text-md">
               Nenhuma sala encontrada.
             </span>
-            <Button className="mt-4" onClick={() => window.location.reload()}>
+            <Button className="mt-4" size="sm" variant="primary" onClick={() => window.location.reload()}>
               Recarregar
             </Button>
           </div>
@@ -361,6 +371,12 @@ export const RoomList: React.FC<RoomListProps> = ({ onSelect, setLoading }) => {
           }}
           onSave={saveRoom}
           room={selectedRoom}
+        />
+      )}
+      {isDeleteModalOpen && selectedRoom && (
+        <DeleteModal
+          cancel={() => setIsDeleteModalOpen(false)}
+          confirm={deleteRoom}
         />
       )}
 

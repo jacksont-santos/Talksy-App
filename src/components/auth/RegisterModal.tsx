@@ -29,7 +29,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose })
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-[0.7] flex items-center justify-center z-50 animate-fade-in">
-      <div className="bg-gray-100 dark:bg-zinc-900 text-gray-800 dark:text-gray-200 rounded-lg p-6 w-full max-w-md relative animate-slide-up shadow-xl">        
+      <div className="bg-gray-100 dark:bg-zinc-900 text-gray-800 dark:text-gray-200 rounded-lg p-6 w-full max-w-sm relative animate-slide-up shadow-xl">        
         <div className="text-sm text-gray-600 mb-6">
             Por favor, informe um nome de usuário para continuar. Este nome será usado para identificar você nas salas de bate-papo.
         </div>
@@ -49,7 +49,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose })
           />
           
           <div className="mt-6 flex justify-end">
-            <Button type="submit" variant="primary">
+            <Button type="submit" variant="primary" size="sm">
               Entrar
             </Button>
           </div>

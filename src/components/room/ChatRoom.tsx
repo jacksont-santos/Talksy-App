@@ -86,7 +86,7 @@ export const ChatRoomPage: React.FC<ChatRoomProps> = ({
   };
 
   return (
-    <div className="h-full">
+    <div className="h-full bg-gray-100 dark:bg-[#161616]">
       {nickname && room && wsToken && !loading && (
         <ChatWindow
           room={room}

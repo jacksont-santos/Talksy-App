@@ -38,7 +38,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => 
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Type a message..."
+          placeholder="Mensagem"
           className="flex-grow px-4 py-3 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
           autoFocus
         />
