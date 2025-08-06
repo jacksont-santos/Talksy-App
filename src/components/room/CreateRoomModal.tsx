@@ -21,7 +21,6 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
   const [active, setIsActive] = useState(true);
   const [isPublic, setIsPublic] = useState(true);
   const [maxUsers, setMaxUsers] = useState(5);
-  // const [hasPassword, setHasPassword] = useState(false);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
@@ -31,8 +30,6 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
       setIsActive(room.active);
       setIsPublic(room.public);
       setMaxUsers(room.maxUsers);
-      // setHasPassword(room.hasPassword);
-      // Password is not loaded from existing room for security reasons
     }
   }, [room]);
 

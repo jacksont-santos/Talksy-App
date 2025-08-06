@@ -5,7 +5,7 @@ import { useWebSocket, notification } from "../../contexts/WebSocketContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { Room } from "../../types/room";
 import { roomService } from "../../services/roomService";
-import { ArrowDownIcon, LogOutIcon } from "lucide-react";
+import { ArrowDownIcon, LogOutIcon, Link, Save } from "lucide-react";
 
 interface ChatWindowProps {
   room: Room;
@@ -116,7 +116,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   const handleSendMessage = (content: string) => {
     if (!nickname)
       return alert("Please set a nickname before sending messages.");
-    
+
     sendMessage({
       roomId: room._id,
       content,
@@ -130,25 +130,77 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const copyRoomLink = () => {
+    const roomLink = `${window.location.origin}?room=${room._id}`;
+    navigator.clipboard
+      .writeText(roomLink)
+      .then(() => {
+        alert("Link copiado para a área de transferência!");
+      })
+      .catch((err) => {
+        console.error("Erro ao copiar o link:", err);
+        alert("Erro ao copiar o link. Tente novamente.");
+      });
+  };
+
+  const hasLink = () => !room.public && room.ownerId === authState.user?._id;
+
+  const saveRoom = () => {
+    const participantRooms = localStorage.getItem("participant");
+    if (participantRooms) {
+      const rooms: string[] = JSON.parse(participantRooms);
+      if (rooms.includes(room._id)) return;
+      rooms.push(room._id);
+      localStorage.setItem("participant", JSON.stringify(rooms));
+    } else {
+      localStorage.setItem("participant", JSON.stringify([room._id]));
+    };
+    alert("Sala salva com sucesso!");
+  }
+
+  const isInvited = () => !room.public && room.ownerId != authState.user?._id;
+
   return (
     <div className="flex flex-col h-full">
-      <div className="dark:bg-[#161616] py-3 px-6 flex justify-between items-center">
+      <div className="dark:bg-[#161616] py-3 px-6 flex justify-between items-center flex-wrap gap-y-4">
         <div>
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
+          <h2 className="text-base md:text-xl font-semibold text-gray-800 dark:text-gray-200">
             {room.name}
           </h2>
-          <p className="text-sm text-gray-500">
+          <p className="text-xs md:text-sm text-gray-500">
             {usersNumber} / {room.maxUsers} Participantes
           </p>
         </div>
-        <button
-          onClick={() => onLeave(room._id)}
-          className="px-3 py-3 bg-gray-400 dark:bg-gray-600 text-white hover:bg-indigo-700 rounded transition-colors"
-        >
-          <span title="Deixar Sala">
-            <LogOutIcon size={18} className="rotate-180" />
-          </span>
-        </button>
+        <div>
+          {isInvited() && (
+            <button
+              onClick={() => saveRoom()}
+              className="p-[0.25rem] md:p-2 mr-2 bg-gray-400 dark:bg-gray-600 text-white hover:bg-indigo-700 rounded transition-colors"
+            >
+              <span title="Salvar sala">
+                <Save className="size-[12px] md:size-[16px]" />
+              </span>
+            </button>
+          )}
+          {hasLink() && (
+            <button
+              onClick={() => copyRoomLink()}
+              className="p-[0.25rem] md:p-2 mr-2 bg-gray-400 dark:bg-gray-600 text-white hover:bg-indigo-700 rounded transition-colors"
+            >
+              <span title="Copiar Link da Sala">
+                <Link className="size-[12px] md:size-[16px]" />
+              </span>
+            </button>
+          )}
+          <button
+            onClick={() => onLeave(room._id)}
+            className="p-[0.25rem] md:p-2 bg-gray-400 dark:bg-gray-600 text-white hover:bg-indigo-700 rounded transition-colors"
+          >
+            <span title="Deixar Sala">
+              <LogOutIcon className="rotate-180 size-[12px] md:size-[16px]" />
+            </span>
+          </button>
+        </div>
       </div>
 
       <div

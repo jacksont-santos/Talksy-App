@@ -15,6 +15,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     user: null,
     isAuthenticated: false,
     isLoading: true,
+    token: undefined,
   });
 
   useEffect(() => {
@@ -32,6 +33,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               user,
               isAuthenticated: true,
               isLoading: false,
+              token: authToken,
             });
         })
         .catch(() => {
@@ -39,6 +41,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             user: null,
             isAuthenticated: false,
             isLoading: false,
+            token: undefined,
           })
           localStorage.removeItem('authToken');
         });
@@ -64,6 +67,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         user: { _id: user._id, username: user.username },
         isAuthenticated: true,
         isLoading: false,
+        token: user.token,
       });
     })
     .catch(() => {
@@ -71,6 +75,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         user: null,
         isAuthenticated: false,
         isLoading: false,
+        token: undefined,
       })
     });
   };
@@ -80,6 +85,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       user: null,
       isAuthenticated: false,
       isLoading: false,
+      token: undefined,
     });
     localStorage.removeItem('authToken');
   };

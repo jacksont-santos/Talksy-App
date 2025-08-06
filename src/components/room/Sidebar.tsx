@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { LoginModal } from "../auth/LoginModal";
 import { useAuth } from "../../contexts/AuthContext";
 import { roomService } from "../../services/roomService";
@@ -8,6 +9,7 @@ import { CreateRoomModal } from "./CreateRoomModal";
 import {
   MessagesSquare,
   MessageSquareDot,
+  MessageSquareText,
   LogIn,
   LogOut,
   PlusCircle,
@@ -16,14 +18,29 @@ import {
 } from "lucide-react";
 
 interface SidebarProps {
-  setSession: (session: "public" | "private") => void;
+  setSession: (session: "public" | "private" | "participant") => void;
+  setDisplayRoomList: (display: boolean) => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ setSession }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ setSession, setDisplayRoomList }) => {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [expanded, setExpanded] = useState(true);
+
+  const [searchParams] = useSearchParams();
   const { authState, logout } = useAuth();
+  const [expanded, setExpanded] = useState(true);
+  const [isParticipant, setParticipant] = useState(false);
+
+  useEffect(() => {
+    const participant = localStorage.getItem("participant");
+    const invited = searchParams.get("room");
+    if (participant || invited) setParticipant(true);
+  }, []);
+
+  const expandList = (state: boolean) => {
+    setExpanded(state);
+    setDisplayRoomList(state);
+  };
 
   const handleAuthClick = () => {
     if (authState.isAuthenticated) {
@@ -40,14 +57,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ setSession }) => {
   };
 
   return (
-    <div className="w-[70px] bg-gray-300 dark:bg-zinc-900 border-r dark:border-gray-700 border-gray-300 relative">
+    <div className="w-[70px] min-w-[70px] bg-gray-300 dark:bg-zinc-900 border-r dark:border-gray-700 border-gray-300 relative">
       <div
         className="flex flex-col justify-center items-center h-[10%] text-gray-800 dark:text-gray-200 cursor-pointer hover:text-indigo-700 dark:hover:text-indigo-700"
       >
         {expanded ? (
-          <ChevronLeft size={20} onClick={() => setExpanded(false)} />
+          <ChevronLeft size={20} onClick={() => expandList(false)} />
         ) : (
-          <ChevronRight size={20} onClick={() => setExpanded(true)} />
+          <ChevronRight size={20} onClick={() => expandList(true)} />
         )}
       </div>
       <div
@@ -86,6 +103,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ setSession }) => {
         <MessageSquareDot size={20} />
         <span className="text-xs text-center font-bold">Minhas salas</span>
       </div>
+      {isParticipant && (
+        <div
+          className="
+            flex flex-col justify-center items-center h-[10%] 
+            text-gray-800 dark:text-gray-200 cursor-pointer hover:text-indigo-700 dark:hover:text-indigo-700
+          "
+          onClick={() => setSession("participant")}
+        >
+          <MessageSquareText size={20} />
+          <span className="text-xs  font-bold">Participante</span>
+        </div>
+      )}
       {authState.isAuthenticated && (
         <div
           className="

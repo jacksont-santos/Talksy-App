@@ -34,12 +34,9 @@ export const ChatRoomPage: React.FC<ChatRoomProps> = ({
     MessageType.ROOM_STATE,
     MessageType.SIGNIN_ROOM,
     MessageType.SIGNOUT_ROOM,
-    MessageType.SIGNOUT_REPLY
   ];
 
     if (!room.active) return null;
-    else if (!room?.public && !authState.isAuthenticated)
-      return null;
 
   useEffect(() => {
     if (authState.isLoading) return;

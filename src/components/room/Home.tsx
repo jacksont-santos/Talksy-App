@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Navbar } from "../layout/Navbar";
 import { Sidebar } from "./Sidebar";
 import { roomService } from "../../services/roomService";
@@ -13,20 +14,39 @@ import { MessageType } from "../../contexts/WebSocketContext";
 
 export const HomePage: React.FC = () => {
   const { signoutRoom, notifications, checkNotification } = useWebSocket();
+  const [searchParams] = useSearchParams();
 
   const [openModal, setOpenModal] = useState(false);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [editingRoom, setEditingRoom] = useState<Room | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [session, setSession] = useState<"public" | "private">(
-    (localStorage.getItem("session") || "public") as "public" | "private"
-  );
 
+  const [loading, setLoading] = useState(false);
+  const [sessionSelected, setSessionSelected] = useState(true);
+  const [session, setSession] = useState<"public" | "private" | "participant">("public");
+
+  const [displayRoomList, setDisplayRoomList] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  const [editingRoom, setEditingRoom] = useState<Room | null>(null);
   const [room, setRoom] = useState<Room | null>(null);
   const [nickname, setNickname] = useState("");
 
   useEffect(() => {
+    document.title = room ? room.name : "Talksy App";
+  }, [room])
+
+  useEffect(() => {
+    window.addEventListener('resize', () => {
+      const isMobile = window.innerWidth < 768;
+      setIsMobile(isMobile);
+    });
+
+    if (searchParams.has("room")) setSession("participant");
+    else {
+      const storedSession = (localStorage.getItem("session")) as "public" | "private" | "participant";
+      if (storedSession) setSession(storedSession);
+    };
+    
     const nickname = localStorage.getItem("nickname");
     if (nickname) setNickname(nickname);
     else setOpenModal(true);
@@ -45,6 +65,7 @@ export const HomePage: React.FC = () => {
     switch (type) {
       case MessageType.SIGNOUT_REPLY:
         const { _id: roomId } = data;
+        setSessionSelected(true);
         if (roomId == room?._id) setRoom(null);
 
         const storedRooms = localStorage.getItem("rooms");
@@ -58,6 +79,11 @@ export const HomePage: React.FC = () => {
         }
         break;
     }
+  };
+
+  const onSelect = (value?: Room) => {
+    if (value) setRoom(value);
+    setSessionSelected(false);
   };
 
   const onLeave = (roomId: string) => {
@@ -78,7 +104,8 @@ export const HomePage: React.FC = () => {
     if (savedNickname) setNickname(savedNickname);
   };
 
-  const handleSession = (session: "public" | "private") => {
+  const handleSession = (session: "public" | "private" | "participant") => {
+    setSessionSelected(true);
     setSession(session);
     localStorage.setItem("session", session);
   };
@@ -86,12 +113,24 @@ export const HomePage: React.FC = () => {
   return (
     <div className="size-full">
       <div className="flex size-full flex ">
-        <Sidebar setSession={handleSession}/>
+        <Sidebar
+          setSession={handleSession}
+          setDisplayRoomList={setDisplayRoomList}
+        />
         <div className="flex-grow">
           <Navbar nickname={nickname} />
           <div className="flex overflow-hidden h-[90%]">
-            <RoomList onSelect={setRoom} setLoading={setLoading} session={session} />
-            <div className="flex-grow">
+            <div className={!isMobile ? "w-fit" : sessionSelected ? "w-full" : "w-[0px]"}>
+              <RoomList
+                display={isMobile ? true : displayRoomList}
+                session={session}
+                isMobile={isMobile}
+                roomIdJoined={room?._id}
+                onSelect={onSelect}
+                setLoading={setLoading}
+              />
+            </div>
+            <div className={!isMobile ? "flex-grow" : sessionSelected ? "w-[0px]" : "w-full"}>
               {room && (
                 <ChatRoomPage
                   nickname={nickname}

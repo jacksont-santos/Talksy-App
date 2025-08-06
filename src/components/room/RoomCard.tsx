@@ -2,7 +2,6 @@ import React from 'react';
 import { Lock, Users, CheckCircle, XCircle } from 'lucide-react';
 import { Room } from '../../types/room';
 import { Button } from '../common/Button';
-import { useWebSocket } from '../../contexts/WebSocketContext';
 
 interface RoomCardProps {
   room: Room;
@@ -10,7 +9,7 @@ interface RoomCardProps {
   onEdit?: () => void;
   onDelete?: () => void;
   isOwner: boolean;
-  usersNumber?: number;
+  usersNumber?: string;
   nickname?: string;
   userId?: string;
 }
@@ -21,7 +20,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({
   onDelete,
   room,
   isOwner,
-  usersNumber = 0,
+  usersNumber,
 }) => {
 
   return (
@@ -42,7 +41,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({
       
       <div className="flex items-center text-sm text-gray-500 mb-4">
         <Users size={16} className="mr-1" />
-        <span> {usersNumber}/{room.maxUsers}</span>
+        <span>{usersNumber ? `${usersNumber}/${room.maxUsers}` : `--`}</span>
       </div>
       
       <div className="flex justify-between items-center">

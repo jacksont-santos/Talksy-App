@@ -1,5 +1,4 @@
 import React from 'react';
-import { useAuth } from '../../contexts/AuthContext';
 import { Message } from './ChatWindow';
 
 interface MessageItemProps {
@@ -8,7 +7,6 @@ interface MessageItemProps {
 }
 
 export const MessageItem: React.FC<MessageItemProps> = ({ message, currentUserNamer }) => {
-  const { authState } = useAuth();
   const isCurrentUser = currentUserNamer === message.nickname;
   const isSystem = message.id === 'system';
   

@@ -1,11 +1,4 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-  useRef,
-} from "react";
+import { useState, useEffect } from "react";
 import { useWebSocket, notification } from "../../contexts/WebSocketContext";
 import { StoredRoom } from "../../types/room";
 import { MessageType } from "../../contexts/WebSocketContext";
@@ -41,10 +34,8 @@ export const RoomMemoryHandler = () => {
     const { type, data } = notification;
 
     if (type == MessageType.SIGN_STATE) {
-      checkNotification();
+      checkNotification(notification.id);
       const { _id: roomId, authenticated } = data;
-      console.log('sign state', roomId, authenticated);
-      console.log('stored rooms', storedRooms);
   
       if (!authenticated && storedRooms.length) {
         const currentRooms = storedRooms.filter((item) => item.id !== roomId);

@@ -53,7 +53,7 @@ export interface notification {
 
 interface WebSocketContextType {
   connectPublic: () => void;
-  connectPrivate: (userId: string) => void;
+  connectPrivate: (authToken: string) => void;
   signinRoom: (params: signinParams) => void;
   signoutRoom: (params: signoutParams) => void;
   sendMessage: (params: messageParams) => void;
@@ -128,21 +128,13 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({
     };
   }, [reconnectAttempts]);
 
-  // useEffect(() => {
-  //   if (notifications.length) {
-  //     setTimeout(() => {
-  //       setNotifications(notificationsList => notificationsList.slice(1))
-  //     }, 2000);
-  //   }
-  // }, [notifications]);
-
   const connectPublic = () => {
     if (socket.current?.readyState)
       socket.current?.send(JSON.stringify({ type: "connection" }));
   };
-  const connectPrivate = (userId: string) => {
+  const connectPrivate = (authToken: string) => {
     if (socket.current?.readyState)
-      socket.current?.send(JSON.stringify({ type: "connection", userId }));
+      socket.current?.send(JSON.stringify({ type: "connection", authToken }));
   };
   const signinRoom = ({
     roomId,
@@ -151,7 +143,6 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({
     isPublic = true,
   }: signinParams) => {
     if (socket.current?.readyState) {
-      // let token = localStorage.getItem('authToken');
       const storedRooms = localStorage.getItem("rooms");
       const data = storedRooms ? JSON.parse(storedRooms) : [];
       const wsTokenStored = data?.find(
