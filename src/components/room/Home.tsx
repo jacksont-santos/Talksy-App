@@ -136,7 +136,7 @@ export const HomePage: React.FC = () => {
                   nickname={nickname}
                   room={room}
                   onLeave={onLeave}
-                  hide={sessionSelected}
+                  hide={sessionSelected && isMobile}
                   loading={loading}
                 />
               )}
