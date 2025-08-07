@@ -1,0 +1,21 @@
+{
+  "name": "Talksy App",
+  "short_name": "Talksy App",
+    "start_url": "/",
+    "display": "fullscreen",
+    "background_color": "#e8e8e8",
+  "description": "An App to talk with friends",
+
+  "icons": [
+    {
+      "src": "./assets/icons/message192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "./assets/icons/message512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
