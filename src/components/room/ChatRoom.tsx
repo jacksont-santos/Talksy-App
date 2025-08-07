@@ -10,6 +10,7 @@ interface ChatRoomProps {
   onLeave: (roomId: string) => void;
   room: Room;
   nickname: string;
+  hide?: boolean;
   loading?: boolean;
 }
 
@@ -17,6 +18,7 @@ export const ChatRoomPage: React.FC<ChatRoomProps> = ({
   onLeave,
   room,
   nickname,
+  hide = false,
   loading = false,
 }) => {
   const { authState } = useAuth();
@@ -83,7 +85,7 @@ export const ChatRoomPage: React.FC<ChatRoomProps> = ({
   };
 
   return (
-    <div className="h-full bg-gray-100 dark:bg-[#161616]">
+    <div className={`${hide ? "hidden" : ""} h-full bg-gray-100 dark:bg-[#161616]`}>
       {nickname && room && wsToken && !loading && (
         <ChatWindow
           room={room}

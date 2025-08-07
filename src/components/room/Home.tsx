@@ -33,6 +33,7 @@ export const HomePage: React.FC = () => {
 
   useEffect(() => {
     document.title = room ? room.name : "Talksy App";
+    if (!room) setSessionSelected(true);
   }, [room])
 
   useEffect(() => {
@@ -65,7 +66,6 @@ export const HomePage: React.FC = () => {
     switch (type) {
       case MessageType.SIGNOUT_REPLY:
         const { _id: roomId } = data;
-        setSessionSelected(true);
         if (roomId == room?._id) setRoom(null);
 
         const storedRooms = localStorage.getItem("rooms");
@@ -136,6 +136,7 @@ export const HomePage: React.FC = () => {
                   nickname={nickname}
                   room={room}
                   onLeave={onLeave}
+                  hide={sessionSelected}
                   loading={loading}
                 />
               )}
