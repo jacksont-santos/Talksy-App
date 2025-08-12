@@ -11,6 +11,7 @@ import { StoredRoom } from "../../types/room";
 import { ChatRoomPage } from "./ChatRoom";
 import { RoomList } from "./RoomList";
 import { MessageType } from "../../contexts/WebSocketContext";
+import { MessageCircleMore } from "lucide-react";
 
 export const HomePage: React.FC = () => {
   const { signoutRoom, notifications, checkNotification } = useWebSocket();
@@ -139,6 +140,17 @@ export const HomePage: React.FC = () => {
                   hide={sessionSelected && isMobile}
                   loading={loading}
                 />
+              )}
+              {!room && !isMobile && (
+                <div
+                  className="text-gray-400 h-full flex flex-col justify-center items-center text-gray-700 dark:text-gray-400 text-sm font-medium"
+                >
+                  <MessageCircleMore size={60} className="text-gray-400"/>
+                  <span className="mt-4 mb-2 font-bold text-base text-center text-indigo-600 dark:text-indigo-700">
+                    Talksy App
+                  </span>
+                  Crie de salas de bate-papo publicas ou privadas, envie e receba mensagens rápido e facil.
+                </div>
               )}
             </div>
           </div>

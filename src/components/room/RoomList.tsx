@@ -51,6 +51,7 @@ export const RoomList: React.FC<RoomListProps> = ({
   const [nickname, setNickname] = useState("");
 
   const [searchParams, setSearchParams] = useSearchParams();
+  const [retry, setRetry] = useState(true);
 
   const {
     setWsToken,
@@ -73,13 +74,16 @@ export const RoomList: React.FC<RoomListProps> = ({
         setPublicRooms((list) => [...list, ...response.data]);
       })
       .catch((error) => {
-        if (error.status !== 404)
+        console.log(error);
+        if (error?.code === "ECONNREFUSED")
+          setRetry(false);
+        else if (error.status !== 404)
           loadingService.setMessage("Erro ao carregar as salas");
       })
       .finally(() => {
         setFetchedPublicRooms(true);
       });
-  }, [connected, authState.isLoading]);
+  }, [connected, authState.isLoading, retry]);
 
   useEffect(() => {
     if (!connected) return;
@@ -95,6 +99,9 @@ export const RoomList: React.FC<RoomListProps> = ({
           setPrivateRooms((list) => [...list, ...response.data]);
         })
         .catch((error) => {
+          console.log(error);
+          if (error?.code === "ECONNREFUSED")
+            setRetry(false);
           if (error.status !== 404)
             loadingService.setMessage("Erro ao carregar as salas");
         })
@@ -108,7 +115,7 @@ export const RoomList: React.FC<RoomListProps> = ({
     const savedNickname = localStorage.getItem("nickname");
     if (savedNickname) setNickname(savedNickname);
     else setIsRegisterModalOpen(true);
-  }, [connected, authState.isAuthenticated]);
+  }, [connected, authState.isAuthenticated, retry]);
 
   useEffect(() => {
     if (fetchedPublicRooms && fetchedPrivateRooms) loadingService.hideLoader();

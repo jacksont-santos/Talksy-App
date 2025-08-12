@@ -1,5 +1,4 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Navbar } from './components/layout/Navbar';
 import { ToastProvider } from './components/common/ToasterProvider';
 import { HomePage } from './components/room/Home';
 import { AuthProvider } from './contexts/AuthContext';

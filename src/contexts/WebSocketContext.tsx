@@ -78,10 +78,11 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({
 }) => {
   const socket = useRef<WebSocket | null>(null);
 
+  const maxReconnectAttempts = import.meta.env.VITE_MAX_RECONNECT_ATTEMPTS;
+  const reconnectDelay = import.meta.env.VITE_RECONNET_DELAY;
+  
   const [connected, setConnected] = useState(false);
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
-  const maxReconnectAttempts = 5;
-  const reconnectDelay = 2000;
 
   const [notifications, setNotifications] = useState<notification[]>([]);
   const [wsToken, setWsToken] = useState("");
