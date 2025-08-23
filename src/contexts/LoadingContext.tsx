@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
 import Loading from './../components/layout/Loading';
+import { timer } from '../utils/timer';
 
 type LoadingContextType = {
   isLoading: boolean;
@@ -7,14 +8,6 @@ type LoadingContextType = {
   showLoader: () => void;
   hideLoader: () => void;
 };
-
-const timer = (time: number) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(true);
-      }, time);
-    });
-  }
 
 const LoadingContext = createContext<LoadingContextType | undefined>(undefined);
 

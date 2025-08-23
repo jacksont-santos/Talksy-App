@@ -14,6 +14,7 @@ import { RegisterModal } from "../auth/RegisterModal";
 import { StoredRoom } from "../../types/room";
 import { JoinRoomModal } from "../chat/JoinRoomModal";
 import { MessageType } from "../../contexts/WebSocketContext";
+import { timer } from "../../utils/timer";
 
 interface RoomListProps {
   onSelect: (value?: Room) => void;
@@ -208,14 +209,6 @@ export const RoomList: React.FC<RoomListProps> = ({
     setIsRegisterModalOpen(false);
     const savedNickname = localStorage.getItem("nickname");
     if (savedNickname) setNickname(savedNickname);
-  };
-
-  const timer = (time: number) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(true);
-      }, time);
-    });
   };
 
   const showRoomState = (room: Room) => {

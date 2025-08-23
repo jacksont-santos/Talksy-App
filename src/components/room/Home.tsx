@@ -115,6 +115,7 @@ export const HomePage: React.FC = () => {
     <div className="size-full">
       <div className="flex size-full flex ">
         <Sidebar
+          isMobile={isMobile}
           setSession={handleSession}
           setDisplayRoomList={setDisplayRoomList}
         />

@@ -20,9 +20,10 @@ import {
 interface SidebarProps {
   setSession: (session: "public" | "private" | "participant") => void;
   setDisplayRoomList: (display: boolean) => void;
+  isMobile?: boolean;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ setSession, setDisplayRoomList }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ setSession, setDisplayRoomList, isMobile }) => {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
@@ -61,10 +62,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ setSession, setDisplayRoomList
       <div
         className="flex flex-col justify-center items-center h-[10%] text-gray-800 dark:text-gray-200 cursor-pointer hover:text-indigo-700 dark:hover:text-indigo-700"
       >
-        {expanded ? (
-          <ChevronLeft size={20} onClick={() => expandList(false)} />
-        ) : (
-          <ChevronRight size={20} onClick={() => expandList(true)} />
+        { !isMobile && (
+          <div>
+            {expanded ? (
+              <ChevronLeft size={20} onClick={() => expandList(false)} />
+            ) : (
+              <ChevronRight size={20} onClick={() => expandList(true)} />
+            )}
+          </div>
         )}
       </div>
       <div

@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { X } from "lucide-react";
+import { timer } from "../../utils/timer";
 
 type Toast = {
   id: string;
@@ -28,14 +29,6 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
     return Array.from({ length: 8 }, () =>
       characters.charAt(Math.floor(Math.random() * characters.length))
     ).join('');
-  };
-
-  const timer = (time: number) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(true);
-      }, time);
-    });
   };
 
   const showToast = (

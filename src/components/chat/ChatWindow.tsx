@@ -6,6 +6,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { Room } from "../../types/room";
 import { roomService } from "../../services/roomService";
 import { ArrowDownIcon, LogOutIcon, Link, Save } from "lucide-react";
+import { timer } from "../../utils/timer";
 
 interface ChatWindowProps {
   room: Room;
@@ -77,16 +78,21 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     }
   }, [notifications]);
 
-  const setNotification = (notification: notification) => {
+  const setNotification = async (notification: notification) => {
     const { type, data } = notification;
     if (type !== "chat") return;
     const { id, roomId, content, nickname, createdAt } = data;
     checkNotification(notification.id);
     if (roomId !== room._id) return;
+    const scrollToBottom = isWatchingLastMessage();
     setRoomMessages((prevMessages) => [
       ...prevMessages,
       { id, content, nickname, createdAt },
     ]);
+    if (isMyMessage(nickname) || scrollToBottom) {
+      await timer(500);
+      goToBottom();
+    };
   };
 
   const handleLoadMore = async () => {
@@ -125,6 +131,16 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       userId: authState.user?._id,
     });
   };
+
+  const isMyMessage = (nicknamesender: string) => nicknamesender === nickname;
+
+  const isWatchingLastMessage = () => {
+    const scrollHeight = container.current?.scrollHeight || 0;
+    const clientHeight = container.current?.clientHeight || 0;
+    const scrollTop = container.current?.scrollTop || 0;
+
+    return Math.abs(scrollHeight - clientHeight - scrollTop) <= 1;
+  }
 
   const goToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
