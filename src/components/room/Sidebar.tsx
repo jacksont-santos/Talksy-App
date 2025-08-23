@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { LoginModal } from "../auth/LoginModal";
+import { AuthModal } from "../auth/AuthModal";
 import { useAuth } from "../../contexts/AuthContext";
 import { roomService } from "../../services/roomService";
 import ThemeToggle from "../../style/theme";
@@ -15,6 +15,7 @@ import {
   PlusCircle,
   ChevronLeft,
   ChevronRight,
+  UserRoundPlus,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -24,7 +25,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ setSession, setDisplayRoomList, isMobile }) => {
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<'signin' | 'signup'>();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const [searchParams] = useSearchParams();
@@ -43,11 +44,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ setSession, setDisplayRoomList
     setDisplayRoomList(state);
   };
 
-  const handleAuthClick = () => {
+  const handleSignupClick = () => {
+    setIsAuthModalOpen("signup");
+  };
+
+  const handleSigninClick = () => {
     if (authState.isAuthenticated) {
       logout();
     } else {
-      setIsLoginModalOpen(true);
+      setIsAuthModalOpen("signin")
     }
   };
 
@@ -73,7 +78,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ setSession, setDisplayRoomList
         )}
       </div>
       <div
-        onClick={handleAuthClick}
+        onClick={handleSignupClick}
+        className="flex flex-col justify-center items-center h-[10%] text-gray-800 dark:text-gray-200 cursor-pointer hover:text-indigo-700 dark:hover:text-indigo-700"
+      >
+        <>
+          <UserRoundPlus size={20} />
+          <span className="text-xs font-bold">Criar conta</span>
+        </>
+      </div>
+      <div
+        onClick={handleSigninClick}
         className="flex flex-col justify-center items-center h-[10%] text-gray-800 dark:text-gray-200 cursor-pointer hover:text-indigo-700 dark:hover:text-indigo-700"
       >
         {authState.isAuthenticated ? (
@@ -136,9 +150,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ setSession, setDisplayRoomList
         <ThemeToggle />
       </div>
 
-      <LoginModal
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
+      <AuthModal
+        type={isAuthModalOpen}
+        isOpen={!!isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(undefined)}
       />
       {isCreateModalOpen && (
         <CreateRoomModal

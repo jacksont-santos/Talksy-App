@@ -3,17 +3,21 @@ import { X } from 'lucide-react';
 import { Input } from '../common/Input';
 import { Button } from '../common/Button';
 import { useAuth } from '../../contexts/AuthContext';
+import { userService } from '../../services/userService';
+import { useToastContext } from '../common/ToasterProvider';
 
-interface LoginModalProps {
+interface AuthModalProps {
+  type?: 'signin' | 'signup';
   isOpen: boolean;
   onClose: () => void;
 }
 
-export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
+export const AuthModal: React.FC<AuthModalProps> = ({ type, isOpen, onClose }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const { login } = useAuth();
+  const { showToast } = useToastContext();
 
   useEffect(() => {
     const storedUsername = localStorage.getItem('username');
@@ -27,12 +31,43 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
     if (!usernameFormatted || !password) {
       setError('Preencha o usuário e a senha');
       return;
+    };
+    if (usernameFormatted.length < 4 || usernameFormatted.length > 20) {
+      setError('O usuário deve ter entre 4 e 20 caracteres');
+      return;
+    };
+    if (password.length < 6 || password.length > 16) {
+      setError('A senha deve ter entre 6 e 16 caracteres');
+      return;
+    };
+
+    if (type === 'signup') {
+      userService.createUserAccount({ username: usernameFormatted, password })
+        .then(() => {
+          showToast("success", "Conta criada com sucesso.");
+          auth(usernameFormatted);
+        })
+        .catch((error) => {
+          if (error.response.status === 409)
+            setError("Usuário já existe.");
+          else
+            setError("Falhou ao criar conta.")
+        });
     }
-    
-    login({ username: usernameFormatted, password })
-      .then(() => onClose())
-      .catch(() => setError("Usuário ou senha incorretos."));
+    else {
+      auth(usernameFormatted);
+    };
   };
+
+  const auth = (username: string) => {
+    login({ username, password })
+      .then(() => {
+        showToast("success", "Autenticado com sucesso.");
+        onClose();
+      })
+      .catch(() => setError("Usuário ou senha incorretos.")
+      );
+  }
 
   if (!isOpen) {
     return null;
@@ -48,7 +83,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
           <X size={24} />
         </button>
         
-        <h2 className="text-xl font-semibold text-center">Login</h2>
+        <h2 className="text-xl font-semibold text-center">
+          {type === 'signin' ? 'Entrar' : 'Criar Conta'}
+        </h2>
 
         <span className="text-sm text-gray-600 dark:text-gray-200">
             Autentique-se para criar, editar, excluir e obter acesso às suas salas de bate-papo.
