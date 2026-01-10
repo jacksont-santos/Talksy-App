@@ -12,7 +12,7 @@ type LoadingContextType = {
 const LoadingContext = createContext<LoadingContextType | undefined>(undefined);
 
 export const LoadingProvider = ({ children }: { children: ReactNode }) => {
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [message, setNewMessage] = useState<string>();
 
   const showLoader = () => {

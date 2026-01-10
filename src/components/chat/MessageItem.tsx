@@ -7,7 +7,7 @@ interface MessageItemProps {
 }
 
 export const MessageItem: React.FC<MessageItemProps> = ({ message, currentUserNamer }) => {
-  const isCurrentUser = currentUserNamer === message.nickname;
+  const isCurrentUser = currentUserNamer === message.username;
   const isSystem = message.id === 'system';
   
   const formattedTime = new Date(message.createdAt).toLocaleTimeString([], {
@@ -38,7 +38,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({ message, currentUserNa
         }`}
       >
         {!isCurrentUser && (
-          <div className="font-semibold text-sm mb-1">{message.nickname}</div>
+          <div className="font-semibold text-sm mb-1">{message.username}</div>
         )}
         <div>{message.content}</div>
         <div className={`text-xs ${isCurrentUser ? 'text-indigo-200' : 'text-gray-500'} text-right mt-1`}>

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { AuthState } from '../types/user';
 import { userAuth, userService } from '../services/userService';
+import { AuthModal } from "../../src/components/auth/AuthModal";
 
 interface AuthContextType {
   authState: AuthState;
@@ -17,6 +18,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     isLoading: true,
     token: undefined,
   });
+  const [authModalOpen, setAuthModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
     init();
@@ -37,21 +39,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             });
         })
         .catch(() => {
-          setAuthState({
-            user: null,
-            isAuthenticated: false,
-            isLoading: false,
-            token: undefined,
-          })
           localStorage.removeItem('authToken');
+          resetAuthState(true);
+          setAuthModalOpen(true);
         });
     }
     else {
-      setAuthState({
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-      });
+      setAuthModalOpen(true);
     };
   }
 
@@ -70,29 +64,33 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         token: user.token,
       });
     })
-    .catch(() => {
-      setAuthState({
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-        token: undefined,
-      })
+    .catch((error) => {
+      resetAuthState();
+      throw error;
     });
   };
 
   const logout = () => {
+    resetAuthState();
+    localStorage.removeItem('authToken');
+  };
+
+   const resetAuthState = (keepLoading = false) => {
     setAuthState({
       user: null,
       isAuthenticated: false,
-      isLoading: false,
+      isLoading: keepLoading,
       token: undefined,
     });
-    localStorage.removeItem('authToken');
-  };
+  }
 
   return (
     <AuthContext.Provider value={{ authState, login, logout }}>
       {children}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+      />
     </AuthContext.Provider>
   );
 };

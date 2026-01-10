@@ -19,6 +19,10 @@ class RoomService {
     return this.httpService.get('/room');
   }
 
+  public async getParticipantRooms() {
+    return this.httpService.get('/room/participant');
+  }
+
   public async getPrivateRoom(roomId: string) {
     return this.httpService.get(`/room/private/${roomId}`);
   }

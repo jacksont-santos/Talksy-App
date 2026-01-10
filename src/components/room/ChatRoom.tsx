@@ -9,7 +9,7 @@ import { MessageType } from "../../contexts/WebSocketContext";
 interface ChatRoomProps {
   onLeave: (roomId: string) => void;
   room: Room;
-  nickname: string;
+  username: string;
   hide?: boolean;
   loading?: boolean;
 }
@@ -17,7 +17,7 @@ interface ChatRoomProps {
 export const ChatRoomPage: React.FC<ChatRoomProps> = ({
   onLeave,
   room,
-  nickname,
+  username,
   hide = false,
   loading = false,
 }) => {
@@ -67,7 +67,7 @@ export const ChatRoomPage: React.FC<ChatRoomProps> = ({
     if (!messagesToReceive.includes(type)) return;
     checkNotification(notification.id);
 
-    const { _id: roomId, nickname, users } = data;
+    const { _id: roomId, username, users } = data;
 
     switch (type) {
       case MessageType.ROOM_STATE:
@@ -75,10 +75,10 @@ export const ChatRoomPage: React.FC<ChatRoomProps> = ({
         break;
       case MessageType.SIGNIN_ROOM:
         setRoomState(users);
-        showToast("info", `${nickname} entrou na sala.`);
+        showToast("info", `${username} entrou na sala.`);
         break;
       case MessageType.SIGNOUT_ROOM:
-        showToast("info", `${nickname} deixou a sala.`);
+        showToast("info", `${username} deixou a sala.`);
         setRoomState(users);
         break;
     };
@@ -86,10 +86,10 @@ export const ChatRoomPage: React.FC<ChatRoomProps> = ({
 
   return (
     <div className={`${hide ? "hidden" : ""} h-full bg-gray-100 dark:bg-[#161616]`}>
-      {nickname && room && wsToken && !loading && (
+      {username && room && wsToken && !loading && (
         <ChatWindow
           room={room}
-          nickname={nickname}
+          username={username}
           token={wsToken}
           usersNumber={roomState}
           onLeave={onLeave}

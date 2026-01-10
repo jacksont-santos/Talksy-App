@@ -27,20 +27,20 @@ export enum MessageType {
 
 interface signinParams {
   roomId: string;
-  nickname: string;
+  username: string;
   password?: string;
   isPublic?: boolean;
 }
 
 interface signoutParams {
   roomId: string;
-  nickname: string;
+  username: string;
 }
 
 interface messageParams {
   roomId: string;
   content: string;
-  nickname: string;
+  username: string;
   token: string;
   userId?: string;
 }
@@ -139,7 +139,7 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({
   };
   const signinRoom = ({
     roomId,
-    nickname,
+    username,
     password,
     isPublic = true,
   }: signinParams) => {
@@ -154,7 +154,7 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({
           type: MessageType.SIGNIN_ROOM,
           data: {
             roomId,
-            nickname,
+            username,
             password,
             public: isPublic,
             roomToken: wsTokenStored,
@@ -163,7 +163,7 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({
       );
     }
   };
-  const signoutRoom = ({ roomId, nickname }: signoutParams) => {
+  const signoutRoom = ({ roomId, username }: signoutParams) => {
     if (socket.current?.readyState) {
       const storedRooms = localStorage.getItem("rooms");
       const data = storedRooms ? JSON.parse(storedRooms) : [];
@@ -173,7 +173,7 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({
       socket.current?.send(
         JSON.stringify({
           type: MessageType.SIGNOUT_ROOM,
-          data: { roomId, nickname, roomToken: wsTokenStored },
+          data: { roomId, username, roomToken: wsTokenStored },
         })
       );
     }
@@ -182,7 +182,7 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({
     roomId,
     content,
     token,
-    nickname,
+    username,
     userId,
   }: messageParams) => {
     if (socket.current?.readyState) {
@@ -190,7 +190,7 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({
         roomId,
         content,
         token,
-        nickname,
+        username,
       };
       socket.current?.send(
         JSON.stringify({ type: "chat", userId, data: message })

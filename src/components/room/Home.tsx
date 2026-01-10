@@ -6,19 +6,16 @@ import { roomService } from "../../services/roomService";
 import { Room, FormRoom } from "../../types/room";
 import { useWebSocket, notification } from "../../contexts/WebSocketContext";
 import { CreateRoomModal } from "./CreateRoomModal";
-import { RegisterModal } from "../auth/RegisterModal";
 import { StoredRoom } from "../../types/room";
 import { ChatRoomPage } from "./ChatRoom";
 import { RoomList } from "./RoomList";
 import { MessageType } from "../../contexts/WebSocketContext";
+import { useAuth } from "../../contexts/AuthContext";
 import { MessageCircleMore } from "lucide-react";
 
 export const HomePage: React.FC = () => {
   const { signoutRoom, notifications, checkNotification } = useWebSocket();
   const [searchParams] = useSearchParams();
-
-  const [openModal, setOpenModal] = useState(false);
-  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const [loading, setLoading] = useState(false);
@@ -30,7 +27,7 @@ export const HomePage: React.FC = () => {
 
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
   const [room, setRoom] = useState<Room | null>(null);
-  const [nickname, setNickname] = useState("");
+  const { authState } = useAuth();
 
   useEffect(() => {
     document.title = room ? room.name : "Talksy App";
@@ -48,10 +45,6 @@ export const HomePage: React.FC = () => {
       const storedSession = (localStorage.getItem("session")) as "public" | "private" | "participant";
       if (storedSession) setSession(storedSession);
     };
-    
-    const nickname = localStorage.getItem("nickname");
-    if (nickname) setNickname(nickname);
-    else setOpenModal(true);
   }, []);
 
   useEffect(() => {
@@ -88,7 +81,7 @@ export const HomePage: React.FC = () => {
   };
 
   const onLeave = (roomId: string) => {
-    signoutRoom({ roomId, nickname });
+    signoutRoom({ roomId, username: authState.user?.username || "" });
   };
 
   const saveRoom = (roomData: FormRoom) => {
@@ -97,12 +90,6 @@ export const HomePage: React.FC = () => {
 
     setIsCreateModalOpen(false);
     setEditingRoom(null);
-  };
-
-  const onCloseRegisterModal = () => {
-    setIsRegisterModalOpen(false);
-    const savedNickname = localStorage.getItem("nickname");
-    if (savedNickname) setNickname(savedNickname);
   };
 
   const handleSession = (session: "public" | "private" | "participant") => {
@@ -120,7 +107,7 @@ export const HomePage: React.FC = () => {
           setDisplayRoomList={setDisplayRoomList}
         />
         <div className="flex-grow">
-          <Navbar nickname={nickname} />
+          <Navbar username={authState.user?.username || ""} />
           <div className="flex overflow-hidden h-[90%]">
             <div className={!isMobile ? "w-fit" : sessionSelected ? "w-full" : "w-[0px]"}>
               <RoomList
@@ -135,7 +122,7 @@ export const HomePage: React.FC = () => {
             <div className={!isMobile ? "flex-grow" : sessionSelected ? "w-[0px]" : "w-full"}>
               {room && (
                 <ChatRoomPage
-                  nickname={nickname}
+                  username={authState.user?.username || ""}
                   room={room}
                   onLeave={onLeave}
                   hide={sessionSelected && isMobile}
@@ -168,14 +155,6 @@ export const HomePage: React.FC = () => {
           room={editingRoom}
         />
       )}
-
-      {isRegisterModalOpen && (
-        <RegisterModal
-          isOpen={isRegisterModalOpen}
-          onClose={() => onCloseRegisterModal()}
-        />
-      )}
-      <RegisterModal isOpen={openModal} onClose={() => location.reload()} />
     </div>
   );
 };

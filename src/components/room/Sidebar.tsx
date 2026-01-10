@@ -1,6 +1,4 @@
-import React, { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
-import { AuthModal } from "../auth/AuthModal";
+import React, { useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { roomService } from "../../services/roomService";
 import ThemeToggle from "../../style/theme";
@@ -10,12 +8,9 @@ import {
   MessagesSquare,
   MessageSquareDot,
   MessageSquareText,
-  LogIn,
-  LogOut,
   PlusCircle,
   ChevronLeft,
   ChevronRight,
-  UserRoundPlus,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -25,35 +20,13 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ setSession, setDisplayRoomList, isMobile }) => {
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState<'signin' | 'signup'>();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-
-  const [searchParams] = useSearchParams();
-  const { authState, logout } = useAuth();
+  const { authState } = useAuth();
   const [expanded, setExpanded] = useState(true);
-  const [isParticipant, setParticipant] = useState(false);
-
-  useEffect(() => {
-    const participant = localStorage.getItem("participant");
-    const invited = searchParams.get("room");
-    if (participant || invited) setParticipant(true);
-  }, []);
 
   const expandList = (state: boolean) => {
     setExpanded(state);
     setDisplayRoomList(state);
-  };
-
-  const handleSignupClick = () => {
-    setIsAuthModalOpen("signup");
-  };
-
-  const handleSigninClick = () => {
-    if (authState.isAuthenticated) {
-      logout();
-    } else {
-      setIsAuthModalOpen("signin")
-    }
   };
 
   const saveRoom = (roomData: FormRoom) => {
@@ -78,31 +51,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ setSession, setDisplayRoomList
         )}
       </div>
       <div
-        onClick={handleSignupClick}
-        className="flex flex-col justify-center items-center h-[10%] text-gray-800 dark:text-gray-200 cursor-pointer hover:text-indigo-700 dark:hover:text-indigo-700"
-      >
-        <>
-          <UserRoundPlus size={20} />
-          <span className="text-xs font-bold">Criar conta</span>
-        </>
-      </div>
-      <div
-        onClick={handleSigninClick}
-        className="flex flex-col justify-center items-center h-[10%] text-gray-800 dark:text-gray-200 cursor-pointer hover:text-indigo-700 dark:hover:text-indigo-700"
-      >
-        {authState.isAuthenticated ? (
-          <>
-            <LogOut size={20} />
-            <span className="text-xs font-bold">Sair</span>
-          </>
-        ) : (
-          <>
-            <LogIn size={20} />
-            <span className="text-xs  font-bold">Entrar</span>
-          </>
-        )}
-      </div>
-      <div
         className="
           flex flex-col justify-center items-center h-[10%] 
           text-gray-800 dark:text-gray-200 cursor-pointer hover:text-indigo-700 dark:hover:text-indigo-700
@@ -122,7 +70,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ setSession, setDisplayRoomList
         <MessageSquareDot size={20} />
         <span className="text-xs text-center font-bold">Minhas salas</span>
       </div>
-      {isParticipant && (
         <div
           className="
             flex flex-col justify-center items-center h-[10%] 
@@ -133,7 +80,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ setSession, setDisplayRoomList
           <MessageSquareText size={20} />
           <span className="text-xs  font-bold">Participante</span>
         </div>
-      )}
       {authState.isAuthenticated && (
         <div
           className="
@@ -149,12 +95,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ setSession, setDisplayRoomList
       <div className="flex justify-center items-center w-full h-[10%] absolute bottom-0">
         <ThemeToggle />
       </div>
-
-      <AuthModal
-        type={isAuthModalOpen}
-        isOpen={!!isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(undefined)}
-      />
       {isCreateModalOpen && (
         <CreateRoomModal
           isOpen={isCreateModalOpen}

@@ -10,7 +10,7 @@ import { timer } from "../../utils/timer";
 
 interface ChatWindowProps {
   room: Room;
-  nickname: string;
+  username: string;
   token: string;
   usersNumber?: number;
   onLeave: (roomId: string) => void;
@@ -19,13 +19,13 @@ interface ChatWindowProps {
 export interface Message {
   id: string;
   content: string;
-  nickname: string;
+  username: string;
   createdAt: string;
 }
 
 export const ChatWindow: React.FC<ChatWindowProps> = ({
   room,
-  nickname,
+  username,
   token,
   usersNumber = 0,
   onLeave,
@@ -81,15 +81,15 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   const setNotification = async (notification: notification) => {
     const { type, data } = notification;
     if (type !== "chat") return;
-    const { id, roomId, content, nickname, createdAt } = data;
+    const { id, roomId, content, username, createdAt } = data;
     checkNotification(notification.id);
     if (roomId !== room._id) return;
     const scrollToBottom = isWatchingLastMessage();
     setRoomMessages((prevMessages) => [
       ...prevMessages,
-      { id, content, nickname, createdAt },
+      { id, content, username, createdAt },
     ]);
-    if (isMyMessage(nickname) || scrollToBottom) {
+    if (isMyMessage(username) || scrollToBottom) {
       await timer(500);
       goToBottom();
     };
@@ -120,19 +120,19 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   };
 
   const handleSendMessage = (content: string) => {
-    if (!nickname)
-      return alert("Please set a nickname before sending messages.");
+    if (!username)
+      return alert("Please set a username before sending messages.");
 
     sendMessage({
       roomId: room._id,
       content,
-      nickname,
+      username,
       token,
       userId: authState.user?._id,
     });
   };
 
-  const isMyMessage = (nicknamesender: string) => nicknamesender === nickname;
+  const isMyMessage = (usernamesender: string) => usernamesender === username;
 
   const isWatchingLastMessage = () => {
     const scrollHeight = container.current?.scrollHeight || 0;
@@ -231,7 +231,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           roomMessages.map((message) => (
             <MessageItem
               key={message.id}
-              currentUserNamer={nickname}
+              currentUserNamer={username}
               message={message}
             />
           ))

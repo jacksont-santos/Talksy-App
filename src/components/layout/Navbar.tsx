@@ -1,7 +1,7 @@
 import React from "react";
 import { MessageSquare, User } from "lucide-react";
 
-export const Navbar: React.FC<{ nickname: string }> = ({ nickname }) => {
+export const Navbar: React.FC<{ username: string }> = ({ username }) => {
   return (
     <nav
       className="
@@ -24,7 +24,7 @@ export const Navbar: React.FC<{ nickname: string }> = ({ nickname }) => {
           <span className="rounded-full bg-gray-300 dark:bg-zinc-800 px-3 py-3 text-sm flex items-center">
             <User size={18} className="" />
           </span>
-          <span>{nickname}</span>
+          <span>{username}</span>
         </div>
       </div>
     </nav>

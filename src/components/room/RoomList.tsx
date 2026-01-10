@@ -10,7 +10,6 @@ import { RoomCard } from "./RoomCard";
 import { CreateRoomModal } from "./CreateRoomModal";
 import { DeleteModal } from "./DeleteRoomModal";
 import { useLoading } from "../../contexts/LoadingContext";
-import { RegisterModal } from "../auth/RegisterModal";
 import { StoredRoom } from "../../types/room";
 import { JoinRoomModal } from "../chat/JoinRoomModal";
 import { MessageType } from "../../contexts/WebSocketContext";
@@ -34,8 +33,6 @@ export const RoomList: React.FC<RoomListProps> = ({
   roomIdJoined,
 }) => {
   const loadingService = useLoading();
-
-  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
@@ -46,17 +43,14 @@ export const RoomList: React.FC<RoomListProps> = ({
   const [participantRooms, setParticipantRooms] = useState<Room[]>([]);
   const [publicRooms, setPublicRooms] = useState<Room[]>([]);
   const [privateRooms, setPrivateRooms] = useState<Room[]>([]);
-  const [fetchedPublicRooms, setFetchedPublicRooms] = useState(false);
-  const [fetchedPrivateRooms, setFetchedPrivateRooms] = useState(false);
   const [roomsState, setRoomsState] = useState<Map<string, number>>(new Map());
-  const [nickname, setNickname] = useState("");
+  const [username, setUsername] = useState("");
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [retry, setRetry] = useState(true);
 
   const {
     setWsToken,
-    connectPublic,
     connectPrivate,
     signinRoom,
     checkNotification,
@@ -66,9 +60,25 @@ export const RoomList: React.FC<RoomListProps> = ({
   const { authState } = useAuth();
 
   useEffect(() => {
-    loadingService.showLoader();
-    if (!connected || authState.isLoading) return;
-    if (!authState.isAuthenticated) connectPublic();
+    if (!connected) return;
+    if (authState.isAuthenticated && authState.token) {
+      if (authState.user?.username) {
+        setUsername(authState.user.username);
+      }
+      connectPrivate(authState.token);
+      getPublicRooms();
+      getPrivateRooms();
+      getParticipantRooms();
+    };
+  }, [connected, authState.isAuthenticated, retry]);
+
+  useEffect(() => {
+    if (notifications.length) {
+      setNotification(notifications[0]);
+    }
+  }, [notifications]);
+
+  const getPublicRooms = () => {
     roomService
       .getPublicRooms()
       .then((response) => {
@@ -80,20 +90,10 @@ export const RoomList: React.FC<RoomListProps> = ({
           setRetry(false);
         else if (error.status !== 404)
           loadingService.setMessage("Erro ao carregar as salas");
-      })
-      .finally(() => {
-        setFetchedPublicRooms(true);
       });
-  }, [connected, authState.isLoading, retry]);
+  }
 
-  useEffect(() => {
-    if (!connected) return;
-    if (authState.isAuthenticated && authState.token) {
-      if (authState.user?.username) {
-        setNickname(authState.user.username);
-      }
-      connectPrivate(authState.token);
-      setFetchedPrivateRooms(false);
+  const getPrivateRooms = () => {
       roomService
         .getPrivateRooms()
         .then((response) => {
@@ -105,58 +105,37 @@ export const RoomList: React.FC<RoomListProps> = ({
             setRetry(false);
           if (error.status !== 404)
             loadingService.setMessage("Erro ao carregar as salas");
-        })
-        .finally(() => {
-          setFetchedPrivateRooms(true);
         });
-    } else {
-      setPrivateRooms([]);
-      setFetchedPrivateRooms(true);
-    }
-    const savedNickname = localStorage.getItem("nickname");
-    if (savedNickname) setNickname(savedNickname);
-    else setIsRegisterModalOpen(true);
-  }, [connected, authState.isAuthenticated, retry]);
+  }
 
-  useEffect(() => {
-    if (fetchedPublicRooms && fetchedPrivateRooms) loadingService.hideLoader();
-  }, [fetchedPublicRooms, fetchedPrivateRooms]);
-
-  useEffect(() => {
-    let storedParticipantRooms: any = localStorage.getItem("participant");
-
-    const roomsToQuery = storedParticipantRooms
-      ? [...(JSON.parse(storedParticipantRooms) as string[])]
-      : [];
+  const getParticipantRooms = () => {
+    roomService
+      .getParticipantRooms()
+      .then((response) => {
+        setParticipantRooms((list) => [...list, ...response.data]);
+      })
+      .catch((error) => {
+        console.log(error);
+        if (error?.code === "ECONNREFUSED")
+          setRetry(false);
+        else if (error.status !== 404)
+          loadingService.setMessage("Erro ao carregar as salas");
+      });
     const query = searchParams.get("room");
-    if (query) roomsToQuery.push(query);
-
-    const promises = roomsToQuery.map((roomId: string) =>
-      roomService.getPrivateRoom(roomId)
-    );
-
-    Promise.allSettled(promises).then((responses) => {
-      const rooms = responses
-        .filter((response) => response.status === "fulfilled")
-        .map((response) => response.value.data);
-      if (!rooms || !rooms.length) return;
-      setParticipantRooms(rooms);
-
-      const invitedRoom = rooms.find((room) => room._id === query);
-      if (!invitedRoom) {
-        showToast("error", "Sala não encontrada.");
-        return;
-      };
-      setSelectedRoom(invitedRoom);
-      setIsJoinModalOpen(true);
-    });
-  }, []);
-
-  useEffect(() => {
-    if (notifications.length) {
-      setNotification(notifications[0]);
-    }
-  }, [notifications]);
+    if (query) {
+      roomService
+        .getPrivateRoom(query)
+        .then((response) => {
+          const invitedRoom = response.data;
+          setSelectedRoom(invitedRoom);
+          setIsJoinModalOpen(true);
+        })
+        .catch((error) => {
+          console.log(error);
+          showToast("error", "Sala não encontrada.");
+        });
+    };
+  }
 
   const isOwner = (ownerId: string) => {
     return authState.isAuthenticated && authState.user?._id === ownerId;
@@ -197,18 +176,12 @@ export const RoomList: React.FC<RoomListProps> = ({
     signinRoom({
       roomId: room._id,
       isPublic: room.public,
-      nickname,
+      username,
       password,
     });
     setLoading(true);
     setSelectedRoom(null);
     setIsJoinModalOpen(false);
-  };
-
-  const onCloseRegisterModal = () => {
-    setIsRegisterModalOpen(false);
-    const savedNickname = localStorage.getItem("nickname");
-    if (savedNickname) setNickname(savedNickname);
   };
 
   const showRoomState = (room: Room) => {
@@ -369,7 +342,7 @@ export const RoomList: React.FC<RoomListProps> = ({
                   key={room._id}
                   room={room}
                   userId={authState.user?._id}
-                  nickname={nickname}
+                  userName={username}
                   usersNumber={showRoomState(room)}
                   isOwner={false}
                   onJoin={() => handleJoinRoom(room)}
@@ -386,7 +359,7 @@ export const RoomList: React.FC<RoomListProps> = ({
                   key={room._id}
                   room={room}
                   userId={authState.user?._id}
-                  nickname={nickname}
+                  userName={username}
                   usersNumber={showRoomState(room)}
                   isOwner={
                     authState.isAuthenticated &&
@@ -416,7 +389,7 @@ export const RoomList: React.FC<RoomListProps> = ({
                     key={room._id}
                     room={room}
                     userId={authState.user?._id}
-                    nickname={nickname}
+                    userName={username}
                     usersNumber={showRoomState(room)}
                     isOwner={
                       authState.isAuthenticated &&
@@ -477,13 +450,6 @@ export const RoomList: React.FC<RoomListProps> = ({
         <DeleteModal
           cancel={() => setIsDeleteModalOpen(false)}
           confirm={deleteRoom}
-        />
-      )}
-
-      {isRegisterModalOpen && (
-        <RegisterModal
-          isOpen={isRegisterModalOpen}
-          onClose={() => onCloseRegisterModal()}
         />
       )}
 
