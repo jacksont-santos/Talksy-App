@@ -10,7 +10,6 @@ import { RoomCard } from "./RoomCard";
 import { CreateRoomModal } from "./CreateRoomModal";
 import { DeleteModal } from "./DeleteRoomModal";
 import { useLoading } from "../../contexts/LoadingContext";
-import { StoredRoom } from "../../types/room";
 import { JoinRoomModal } from "../chat/JoinRoomModal";
 import { MessageType } from "../../contexts/WebSocketContext";
 import { timer } from "../../utils/timer";
@@ -43,15 +42,15 @@ export const RoomList: React.FC<RoomListProps> = ({
   const [participantRooms, setParticipantRooms] = useState<Room[]>([]);
   const [publicRooms, setPublicRooms] = useState<Room[]>([]);
   const [privateRooms, setPrivateRooms] = useState<Room[]>([]);
+  const [roomsFetched, setRoomsFetched] = useState(false);
   const [roomsState, setRoomsState] = useState<Map<string, number>>(new Map());
-  const [username, setUsername] = useState("");
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [retry, setRetry] = useState(true);
 
   const {
-    setWsToken,
-    connectPrivate,
+    connect,
+    firstSigninRoom,
     signinRoom,
     checkNotification,
     notifications,
@@ -62,14 +61,10 @@ export const RoomList: React.FC<RoomListProps> = ({
   useEffect(() => {
     if (!connected) return;
     if (authState.isAuthenticated && authState.token) {
-      if (authState.user?.username) {
-        setUsername(authState.user.username);
-      }
-      connectPrivate(authState.token);
-      getPublicRooms();
-      getPrivateRooms();
-      getParticipantRooms();
-    };
+      loadingService.showLoader();
+      connect(authState.token);
+      getRooms();
+    }
   }, [connected, authState.isAuthenticated, retry]);
 
   useEffect(() => {
@@ -78,64 +73,81 @@ export const RoomList: React.FC<RoomListProps> = ({
     }
   }, [notifications]);
 
-  const getPublicRooms = () => {
-    roomService
-      .getPublicRooms()
-      .then((response) => {
-        setPublicRooms((list) => [...list, ...response.data]);
+  useEffect(() => {
+    if (roomsFetched) {
+      const queryId = searchParams.get("room");
+      const token = searchParams.get("token");
+      if (queryId && token) {
+        getInvitedRoom(queryId, token);
+      } else {
+        loadingService.finishLoader();
+      }
+    }
+  }, [roomsFetched]);
+
+  const getRooms = async () => {
+    if (!retry) return;
+    await Promise.all([
+      roomService.getPublicRooms(),
+      roomService.getPrivateRooms(),
+      roomService.getParticipantRooms(),
+    ])
+      .then(([publicResponse, privateResponse, participantResponse]) => {
+        setSectionRooms("public", publicResponse.data);
+        setSectionRooms("private", privateResponse.data);
+        setSectionRooms("participant", participantResponse.data);
       })
       .catch((error) => {
-        console.log(error);
-        if (error?.code === "ECONNREFUSED")
+        if (error?.code === "ECONNREFUSED") {
           setRetry(false);
-        else if (error.status !== 404)
+          showToast("error", "Não foi possível conectar ao servidor.");
+        } else if (error.status !== 404) {
           loadingService.setMessage("Erro ao carregar as salas");
+          resetRooms();
+        }
       });
-  }
+    setRoomsFetched(true);
+  };
 
-  const getPrivateRooms = () => {
-      roomService
-        .getPrivateRooms()
-        .then((response) => {
-          setPrivateRooms((list) => [...list, ...response.data]);
-        })
-        .catch((error) => {
-          console.log(error);
-          if (error?.code === "ECONNREFUSED")
-            setRetry(false);
-          if (error.status !== 404)
-            loadingService.setMessage("Erro ao carregar as salas");
-        });
-  }
+  const setSectionRooms = (
+    section: "public" | "private" | "participant",
+    rooms: any,
+  ) => {
+    switch (section) {
+      case "public":
+        setPublicRooms((list) => [...list, ...rooms]);
+        break;
+      case "private":
+        setPrivateRooms((list) => [...list, ...rooms]);
+        break;
+      case "participant":
+        setParticipantRooms((list) => [...list, ...rooms]);
+        break;
+    }
+  };
 
-  const getParticipantRooms = () => {
-    roomService
-      .getParticipantRooms()
-      .then((response) => {
-        setParticipantRooms((list) => [...list, ...response.data]);
-      })
+  const resetRooms = () => {
+    setPublicRooms([]);
+    setPrivateRooms([]);
+    setParticipantRooms([]);
+  };
+
+  const getInvitedRoom = async (query: string, token: string) => {
+    const invitedRoom = await roomService
+      .getInvitedRoom(query, token)
+      .then((response) => response.data)
       .catch((error) => {
         console.log(error);
-        if (error?.code === "ECONNREFUSED")
-          setRetry(false);
-        else if (error.status !== 404)
-          loadingService.setMessage("Erro ao carregar as salas");
+        loadingService.setMessage("Erro ao carregar a sala");
       });
-    const query = searchParams.get("room");
-    if (query) {
-      roomService
-        .getPrivateRoom(query)
-        .then((response) => {
-          const invitedRoom = response.data;
-          setSelectedRoom(invitedRoom);
-          setIsJoinModalOpen(true);
-        })
-        .catch((error) => {
-          console.log(error);
-          showToast("error", "Sala não encontrada.");
-        });
-    };
-  }
+      if (!invitedRoom) return;
+      loadingService.finishLoader();
+      if (isMember(invitedRoom)) signinRoom(invitedRoom._id);
+      else {
+        setSelectedRoom(invitedRoom);
+        setIsJoinModalOpen(true);
+      }
+  };
 
   const isOwner = (ownerId: string) => {
     return authState.isAuthenticated && authState.user?._id === ownerId;
@@ -160,33 +172,53 @@ export const RoomList: React.FC<RoomListProps> = ({
   };
 
   const handleJoinRoom = (room: Room) => {
+    if (isMember(room)) {
+      signIn(room._id);
+      return;
+    };
+    if (room.public || !room.public && isOwner(room.ownerId)) {
+      firstSignIn(room._id);
+      return;
+    };
     if (!room.public && !isOwner(room.ownerId)) {
       setSelectedRoom(room);
       setIsJoinModalOpen(true);
       return;
-    }
+    };
     if (roomIdJoined === room._id) {
       onSelect();
-      return;
-    }
-    sign(room);
+    };
+  }
+
+  const isMember = (room: Room) => {
+    const currentRoom = participantRooms.find((item) => item._id === room._id);
+    return !!currentRoom;
   };
 
-  const sign = (room: Room, password?: string) => {
-    signinRoom({
-      roomId: room._id,
-      isPublic: room.public,
-      username,
-      password,
-    });
+  const firstSignIn = (roomId: string, password?: string) => {
+    firstSigninRoom(roomId, password);
     setLoading(true);
-    setSelectedRoom(null);
+    setIsJoinModalOpen(false);
+  };
+
+  const signIn = (roomId: string) => {
+    signinRoom(roomId);
+    setLoading(true);
     setIsJoinModalOpen(false);
   };
 
   const showRoomState = (room: Room) => {
-    if (!room.public && roomIdJoined !== room._id && !isOwner(room.ownerId)) return;
+    if (!room.public && roomIdJoined !== room._id && !isOwner(room.ownerId))
+      return;
     return (roomsState.get(room._id) || 0) + "";
+  };
+
+  const removeParam = (param: string) => {
+    if (searchParams.has(param)) {
+      const newParams = new URLSearchParams(searchParams.toString());
+      newParams.delete(param);
+      setSearchParams(newParams);
+    };
   }
 
   const messagesToReceive = [
@@ -206,29 +238,42 @@ export const RoomList: React.FC<RoomListProps> = ({
     const { _id: roomId, public: isPublic } = data;
 
     const rooms = publicRooms.concat(privateRooms).concat(participantRooms);
+    const existentRoom = rooms.find((room) => room._id === roomId);
     const setRoom = isPublic ? setPublicRooms : setPrivateRooms;
 
     switch (type) {
       case MessageType.ADD_ROOM:
-        const existentRoom = rooms.find((room) => room._id === roomId);
-        if (existentRoom) return;
-        setRoom((list) => [...list, data]);
+        if (!existentRoom) setRoom((list) => [...list, data]);
         break;
 
       case MessageType.UPDATE_ROOM:
-        setRoom((list) => {
-          const newList = list.map((room) =>
-            room._id === roomId ? data : room
-          );
-          return newList;
-        });
+        setParticipantRooms((list) => list.map((room) => room._id === roomId ? data : room));
+        if (isPublic) {
+          setPrivateRooms((list) => list.filter((room) => room._id !== roomId));
+          setPublicRooms((list) => {
+              const roomExists = list.some((room) => room._id === roomId);
+              if (!roomExists) return [...list, data];
+              return list.map((room) => room._id === roomId ? data : room);
+            });
+        }
+        else {
+          setPublicRooms((list) => list.filter((room) => room._id !== roomId));
+          if (data.ownerId === authState.user?._id) {
+            setPrivateRooms((list) => {
+              const roomExists = list.some((room) => room._id === roomId);
+              if (!roomExists) return [...list, data];
+              return list.map((room) => room._id === roomId ? data : room);
+            });
+          }
+        }
+
         break;
 
       case MessageType.REMOVE_ROOM:
-        setRoom((list) => {
-          return list.filter((room) => room._id !== data.roomId);
-        });
+        setRoom((list) => list.filter((room) => room._id !== data.roomId));
+        setParticipantRooms((list) => list.filter((room) => room._id !== data.roomId));
         break;
+
       case MessageType.ROOMS_STATE:
         setRoomsState(() => {
           const { rooms } = data;
@@ -237,10 +282,11 @@ export const RoomList: React.FC<RoomListProps> = ({
             rooms.map((room: { roomId: string; users: string }) => [
               room.roomId,
               room.users,
-            ])
+            ]),
           );
         });
         break;
+
       case MessageType.UPDATE_ROOM_STATE:
         const { users } = data;
         setRoomsState((state) => {
@@ -248,46 +294,15 @@ export const RoomList: React.FC<RoomListProps> = ({
           return state;
         });
         break;
+
       case MessageType.SIGNIN_REPLY:
         await timer(400);
         setLoading(false);
-
-        const room = rooms.find((room) => room._id === roomId);
-        if (!room) return;
-        const { token } = data;
-        if (!token) {
-          const storedRooms = localStorage.getItem("rooms");
-          if (storedRooms) {
-            let rooms: StoredRoom[] = JSON.parse(storedRooms);
-            rooms = rooms.filter((item) => item.id !== roomId);
-            if (rooms.length)
-              localStorage.setItem("rooms", JSON.stringify(rooms));
-            else localStorage.removeItem("rooms");
-          }
-        } else {
-          const storedRooms = localStorage.getItem("rooms");
-          if (storedRooms) {
-            const rooms: StoredRoom[] = JSON.parse(storedRooms);
-            const room = rooms.find((item) => item.id === roomId);
-            if (room) room.token = token;
-            else rooms.push({ id: roomId, token });
-            localStorage.setItem("rooms", JSON.stringify(rooms));
-          } else {
-            localStorage.setItem(
-              "rooms",
-              JSON.stringify([{ id: roomId, token }])
-            );
-          };
-
-          setWsToken(token);
-          onSelect(room);
-
-          if (searchParams.has("room")) {
-            const newParams = new URLSearchParams(searchParams.toString());
-            newParams.delete("room");
-            setSearchParams(newParams);
-          };
-        };
+        if (!existentRoom && !selectedRoom) return;
+        setIsJoinModalOpen(false);
+        onSelect(existentRoom || selectedRoom!);
+        removeParam("room");
+        removeParam("token");
         break;
     }
   };
@@ -305,7 +320,7 @@ export const RoomList: React.FC<RoomListProps> = ({
         {session == "participant" && (
           <div>
             <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
-              Participante
+              Membro
             </h3>
             <p className="text-sm text-gray-500">
               {participantRooms.length} salas
@@ -327,9 +342,7 @@ export const RoomList: React.FC<RoomListProps> = ({
             <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
               Salas públicas
             </h3>
-            <p className="text-sm text-gray-500">
-              {publicRooms.length} salas
-            </p>
+            <p className="text-sm text-gray-500">{publicRooms.length} salas</p>
           </div>
         )}
       </div>
@@ -342,7 +355,6 @@ export const RoomList: React.FC<RoomListProps> = ({
                   key={room._id}
                   room={room}
                   userId={authState.user?._id}
-                  userName={username}
                   usersNumber={showRoomState(room)}
                   isOwner={false}
                   onJoin={() => handleJoinRoom(room)}
@@ -359,7 +371,6 @@ export const RoomList: React.FC<RoomListProps> = ({
                   key={room._id}
                   room={room}
                   userId={authState.user?._id}
-                  userName={username}
                   usersNumber={showRoomState(room)}
                   isOwner={
                     authState.isAuthenticated &&
@@ -389,7 +400,6 @@ export const RoomList: React.FC<RoomListProps> = ({
                     key={room._id}
                     room={room}
                     userId={authState.user?._id}
-                    userName={username}
                     usersNumber={showRoomState(room)}
                     isOwner={
                       authState.isAuthenticated &&
@@ -458,7 +468,7 @@ export const RoomList: React.FC<RoomListProps> = ({
           roomName={selectedRoom.name}
           isOpen={isJoinModalOpen}
           onClose={() => setIsJoinModalOpen(false)}
-          onJoin={(password) => sign(selectedRoom, password)}
+          onJoin={(password) => firstSignIn(selectedRoom._id, password)}
         />
       )}
     </div>

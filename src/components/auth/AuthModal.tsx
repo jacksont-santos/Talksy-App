@@ -15,6 +15,7 @@ type AuthType = 'signin' | 'signup';
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [type, setType] = useState<AuthType>('signin');
   const [username, setUsername] = useState('');
+  const [nickname, setNickname] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -25,6 +26,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   useEffect(() => {
     const storedUsername = localStorage.getItem('username');
     if (storedUsername) setUsername(storedUsername);
+
+    const storedNickname = localStorage.getItem('nickname');
+    if (storedNickname) setNickname(storedNickname);
   }, []);
 
   if (!isOpen) return null;
@@ -35,14 +39,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
   const validateForm = () => {
     const formattedUsername = username.trim();
+    const formattedNickname = nickname.trim();
 
-    if (!formattedUsername || !password) {
-      setError('Preencha o usuário e a senha.');
+
+    if (!formattedUsername || !password || (type === 'signup' && !formattedNickname)) {
+      setError('Preencha todos os campos.');
       return null;
     }
 
-    if (formattedUsername.length < 4 || formattedUsername.length > 20) {
-      setError('O usuário deve ter entre 4 e 20 caracteres.');
+    if (formattedUsername.length < 6 || formattedUsername.length > 24) {
+      setError('O usuário deve ter entre 6 e 24 caracteres.');
       return null;
     }
 
@@ -51,12 +57,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       return null;
     }
 
-    return formattedUsername;
+    if (type === 'signup' && (formattedNickname.length < 4 || formattedNickname.length > 24)) {
+      setError('O apelido deve ter entre 4 e 24 caracteres.');
+      return null;
+    }
+
+    return {
+      usernameInput: formattedUsername,
+      passwordInput: password,
+      nicknameInput: formattedNickname,
+    };
   };
 
-  const authenticate = async (formattedUsername: string) => {
+  const authenticate = async (username: string, password: string) => {
     try {
-      await login({ username: formattedUsername, password });
+      await login({ username, password });
       showToast('success', 'Autenticado com sucesso.');
       onClose();
     } catch {
@@ -68,21 +83,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     e.preventDefault();
     clearError();
 
-    const formattedUsername = validateForm();
-    if (!formattedUsername) return;
+    const validated = validateForm();
+    if (!validated) return;
+    const { usernameInput, passwordInput, nicknameInput } = validated;
 
     setIsLoading(true);
 
     try {
       if (type === 'signup') {
         await userService.createUserAccount({
-          username: formattedUsername,
-          password,
+          username: usernameInput,
+          password: passwordInput,
+          nickname: nicknameInput,
         });
         showToast('success', 'Conta criada com sucesso.');
       }
 
-      await authenticate(formattedUsername);
+      await authenticate(usernameInput, passwordInput);
     } catch (err: any) {
       if (err?.response?.status === 409) {
         setError('Usuário já existe.');
@@ -103,7 +120,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       <div className="relative w-full max-w-sm rounded-xl bg-gray-100 p-6 shadow-xl dark:bg-zinc-900 animate-slide-up">
         <div className="mb-6 text-center">
           <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100">
-            {type === 'signin' ? 'Bem-vindo de volta' : 'Criar conta'}
+            {type === 'signin' ? 'Bem vindo de volta' : 'Criar conta'}
           </h2>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
             Acesse e gerencie suas salas de bate-papo.
@@ -126,7 +143,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               clearError();
             }}
             required
-            
           />
 
           <Input
@@ -139,6 +155,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             }}
             required
           />
+
+          {type === 'signup' && (
+            <Input
+              label="Apelido"
+              value={nickname}
+              onChange={(e) => {
+                setNickname(e.target.value);
+                clearError();
+              }}
+              required
+            />
+          )}
 
           <div className="mt-6 flex items-center justify-between">
             <button

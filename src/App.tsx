@@ -4,7 +4,6 @@ import { HomePage } from "./components/room/Home";
 import { AuthProvider } from "./contexts/AuthContext";
 import { WebSocketProvider } from "./contexts/WebSocketContext";
 import { LoadingProvider } from "./contexts/LoadingContext";
-import { RoomMemoryHandler } from "./components/room/RoomMemoryHandler";
 
 function App() {
   return (
@@ -14,7 +13,6 @@ function App() {
           <WebSocketProvider>
             <Router>
               <div className="flex flex-col w-screen h-screen overflow-hidden bg-gray-300 dark:bg-[#161616]">
-                <RoomMemoryHandler />
                 <main className="flex-grow h-[100vh] overflow-hidden">
                   <Routes>
                     <Route path="/" element={<HomePage />} />

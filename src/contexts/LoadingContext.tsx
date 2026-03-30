@@ -7,6 +7,7 @@ type LoadingContextType = {
   setMessage: (message: string) => void;
   showLoader: () => void;
   hideLoader: () => void;
+  finishLoader: () => void;
 };
 
 const LoadingContext = createContext<LoadingContextType | undefined>(undefined);
@@ -29,8 +30,14 @@ export const LoadingProvider = ({ children }: { children: ReactNode }) => {
     setNewMessage(message);
   };
 
+  const finishLoader = async () => {
+    await timer(400);
+    setIsLoading(false);
+    setNewMessage(undefined);
+  }
+
   return (
-    <LoadingContext.Provider value={{ isLoading, setMessage, showLoader, hideLoader }}>
+    <LoadingContext.Provider value={{ isLoading, setMessage, showLoader, hideLoader, finishLoader }}>
       {(isLoading || message) && <Loading message={message} />}
       {children}
     </LoadingContext.Provider>

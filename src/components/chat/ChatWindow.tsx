@@ -10,23 +10,22 @@ import { timer } from "../../utils/timer";
 
 interface ChatWindowProps {
   room: Room;
-  username: string;
-  token: string;
+  nickname: string;
   usersNumber?: number;
   onLeave: (roomId: string) => void;
 }
 
 export interface Message {
   id: string;
+  userId: string;
   content: string;
-  username: string;
+  nickname: string;
   createdAt: string;
 }
 
 export const ChatWindow: React.FC<ChatWindowProps> = ({
   room,
-  username,
-  token,
+  nickname,
   usersNumber = 0,
   onLeave,
 }) => {
@@ -81,15 +80,15 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   const setNotification = async (notification: notification) => {
     const { type, data } = notification;
     if (type !== "chat") return;
-    const { id, roomId, content, username, createdAt } = data;
+    const { id, roomId, content, userId, nickname, createdAt } = data;
     checkNotification(notification.id);
     if (roomId !== room._id) return;
     const scrollToBottom = isWatchingLastMessage();
     setRoomMessages((prevMessages) => [
       ...prevMessages,
-      { id, content, username, createdAt },
+      { id, userId, content, nickname, createdAt },
     ]);
-    if (isMyMessage(username) || scrollToBottom) {
+    if (isMyMessage(userId) || scrollToBottom) {
       await timer(500);
       goToBottom();
     };
@@ -120,19 +119,14 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   };
 
   const handleSendMessage = (content: string) => {
-    if (!username)
-      return alert("Please set a username before sending messages.");
-
     sendMessage({
       roomId: room._id,
       content,
-      username,
-      token,
-      userId: authState.user?._id,
+      nickname,
     });
   };
 
-  const isMyMessage = (usernamesender: string) => usernamesender === username;
+  const isMyMessage = (userId: string) => userId === authState.user?._id;
 
   const isWatchingLastMessage = () => {
     const scrollHeight = container.current?.scrollHeight || 0;
@@ -147,7 +141,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   };
 
   const copyRoomLink = () => {
-    const roomLink = `${window.location.origin}?room=${room._id}`;
+    const authToken = localStorage.getItem("authToken");
+    const roomLink = `${window.location.origin}?room=${room._id}&token=${authToken}`;
     navigator.clipboard
       .writeText(roomLink)
       .then(() => {
@@ -231,7 +226,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           roomMessages.map((message) => (
             <MessageItem
               key={message.id}
-              currentUserNamer={username}
+              currentUser={authState.user?._id || ""}
               message={message}
             />
           ))

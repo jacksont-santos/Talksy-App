@@ -6,7 +6,6 @@ import { roomService } from "../../services/roomService";
 import { Room, FormRoom } from "../../types/room";
 import { useWebSocket, notification } from "../../contexts/WebSocketContext";
 import { CreateRoomModal } from "./CreateRoomModal";
-import { StoredRoom } from "../../types/room";
 import { ChatRoomPage } from "./ChatRoom";
 import { RoomList } from "./RoomList";
 import { MessageType } from "../../contexts/WebSocketContext";
@@ -61,16 +60,6 @@ export const HomePage: React.FC = () => {
       case MessageType.SIGNOUT_REPLY:
         const { _id: roomId } = data;
         if (roomId == room?._id) setRoom(null);
-
-        const storedRooms = localStorage.getItem("rooms");
-        if (storedRooms) {
-          let rooms: StoredRoom[] = JSON.parse(storedRooms);
-          const room = rooms.find((item) => item.id === roomId);
-          if (room) {
-            rooms = rooms.filter((item) => item.id !== roomId);
-            localStorage.setItem("rooms", JSON.stringify(rooms));
-          }
-        }
         break;
     }
   };
@@ -81,7 +70,7 @@ export const HomePage: React.FC = () => {
   };
 
   const onLeave = (roomId: string) => {
-    signoutRoom({ roomId, username: authState.user?.username || "" });
+    signoutRoom(roomId);
   };
 
   const saveRoom = (roomData: FormRoom) => {
@@ -107,7 +96,7 @@ export const HomePage: React.FC = () => {
           setDisplayRoomList={setDisplayRoomList}
         />
         <div className="flex-grow">
-          <Navbar username={authState.user?.username || ""} />
+          <Navbar nickname={authState.user?.nickname || ""} />
           <div className="flex overflow-hidden h-[90%]">
             <div className={!isMobile ? "w-fit" : sessionSelected ? "w-full" : "w-[0px]"}>
               <RoomList
@@ -122,7 +111,7 @@ export const HomePage: React.FC = () => {
             <div className={!isMobile ? "flex-grow" : sessionSelected ? "w-[0px]" : "w-full"}>
               {room && (
                 <ChatRoomPage
-                  username={authState.user?.username || ""}
+                  nickname={authState.user?.nickname || ""}
                   room={room}
                   onLeave={onLeave}
                   hide={sessionSelected && isMobile}

@@ -3,11 +3,11 @@ import { Message } from './ChatWindow';
 
 interface MessageItemProps {
   message: Message;
-  currentUserNamer: string;
+  currentUser: string;
 }
 
-export const MessageItem: React.FC<MessageItemProps> = ({ message, currentUserNamer }) => {
-  const isCurrentUser = currentUserNamer === message.username;
+export const MessageItem: React.FC<MessageItemProps> = ({ message, currentUser }) => {
+  const isCurrentUser = currentUser === message.userId;
   const isSystem = message.id === 'system';
   
   const formattedTime = new Date(message.createdAt).toLocaleTimeString([], {
@@ -38,7 +38,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({ message, currentUserNa
         }`}
       >
         {!isCurrentUser && (
-          <div className="font-semibold text-sm mb-1">{message.username}</div>
+          <div className="font-semibold text-sm mb-1">{message.nickname}</div>
         )}
         <div>{message.content}</div>
         <div className={`text-xs ${isCurrentUser ? 'text-indigo-200' : 'text-gray-500'} text-right mt-1`}>

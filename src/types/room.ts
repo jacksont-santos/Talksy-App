@@ -10,7 +10,7 @@ export interface Room {
 export interface FormRoom {
   name: string;
   active: boolean;
-  isPublic: boolean;
+  isPublic: 'true' | 'false';
   maxUsers: number;
   password?: string;
 }

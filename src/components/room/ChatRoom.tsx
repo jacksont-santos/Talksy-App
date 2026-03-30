@@ -9,7 +9,7 @@ import { MessageType } from "../../contexts/WebSocketContext";
 interface ChatRoomProps {
   onLeave: (roomId: string) => void;
   room: Room;
-  username: string;
+  nickname: string;
   hide?: boolean;
   loading?: boolean;
 }
@@ -17,17 +17,16 @@ interface ChatRoomProps {
 export const ChatRoomPage: React.FC<ChatRoomProps> = ({
   onLeave,
   room,
-  username,
+  nickname,
   hide = false,
   loading = false,
 }) => {
-  const { authState } = useAuth();
   const { showToast } = useToastContext();
+  const { authState } = useAuth();
   const [ roomState, setRoomState ] = useState(0);
   const [ currentRoomId, setCurrentRoomId ] = useState<string | null>(null);
 
   const {
-    wsToken,
     checkNotification,
     notifications,
   } = useWebSocket();
@@ -38,7 +37,7 @@ export const ChatRoomPage: React.FC<ChatRoomProps> = ({
     MessageType.SIGNOUT_ROOM,
   ];
 
-    if (!room.active) return null;
+  if (!room.active) return null;
 
   useEffect(() => {
     if (authState.isLoading) return;
@@ -67,7 +66,7 @@ export const ChatRoomPage: React.FC<ChatRoomProps> = ({
     if (!messagesToReceive.includes(type)) return;
     checkNotification(notification.id);
 
-    const { _id: roomId, username, users } = data;
+    const { _id: roomId, nickname, users } = data;
 
     switch (type) {
       case MessageType.ROOM_STATE:
@@ -75,10 +74,10 @@ export const ChatRoomPage: React.FC<ChatRoomProps> = ({
         break;
       case MessageType.SIGNIN_ROOM:
         setRoomState(users);
-        showToast("info", `${username} entrou na sala.`);
+        showToast("info", `${nickname} entrou na sala.`);
         break;
       case MessageType.SIGNOUT_ROOM:
-        showToast("info", `${username} deixou a sala.`);
+        showToast("info", `${nickname} deixou a sala.`);
         setRoomState(users);
         break;
     };
@@ -86,11 +85,10 @@ export const ChatRoomPage: React.FC<ChatRoomProps> = ({
 
   return (
     <div className={`${hide ? "hidden" : ""} h-full bg-gray-100 dark:bg-[#161616]`}>
-      {username && room && wsToken && !loading && (
+      {nickname && room && !loading && (
         <ChatWindow
           room={room}
-          username={username}
-          token={wsToken}
+          nickname={nickname}
           usersNumber={roomState}
           onLeave={onLeave}
         />

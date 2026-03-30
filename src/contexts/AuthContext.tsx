@@ -5,7 +5,7 @@ import { AuthModal } from "../../src/components/auth/AuthModal";
 
 interface AuthContextType {
   authState: AuthState;
-  login: (authData: userAuth) => Promise<void>;
+  login: (authData: Omit<userAuth, 'nickname'>) => Promise<void>;
   logout: () => void;
 }
 
@@ -16,7 +16,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     user: null,
     isAuthenticated: false,
     isLoading: true,
-    token: undefined,
+    token: null,
   });
   const [authModalOpen, setAuthModalOpen] = useState<boolean>(false);
 
@@ -30,13 +30,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       await userService.getUser()
         .then((response) => {
           const user = response.data;
-          if (user)
-            setAuthState({
-              user,
-              isAuthenticated: true,
-              isLoading: false,
-              token: authToken,
-            });
+          setAuthState({
+            user,
+            isAuthenticated: true,
+            isLoading: false,
+            token: authToken,
+          });
         })
         .catch(() => {
           localStorage.removeItem('authToken');
@@ -49,16 +48,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
   }
 
-  const login = async (authData: userAuth) => {
+  const login = async (authData: Omit<userAuth, 'nickname'>) => {
     return userService.signin(authData)
     .then((response) => {
       const user = response.data;
-      if (user) {
-        localStorage.setItem('authToken', user.token);
-        localStorage.setItem('username', user.username);
-      }
+      localStorage.setItem('authToken', user.token);
+      localStorage.setItem('username', user.username);
+      localStorage.setItem('nickname', user.nickname);
       setAuthState({
-        user: { _id: user._id, username: user.username },
+        user: { _id: user._id, username: user.username, nickname: user.nickname },
         isAuthenticated: true,
         isLoading: false,
         token: user.token,
@@ -73,6 +71,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const logout = () => {
     resetAuthState();
     localStorage.removeItem('authToken');
+    localStorage.removeItem('username');
+    localStorage.removeItem('nickname');
   };
 
    const resetAuthState = (keepLoading = false) => {
@@ -80,7 +80,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       user: null,
       isAuthenticated: false,
       isLoading: keepLoading,
-      token: undefined,
+      token: null,
     });
   }
 

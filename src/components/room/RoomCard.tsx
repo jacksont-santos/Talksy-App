@@ -10,7 +10,6 @@ interface RoomCardProps {
   onDelete?: () => void;
   isOwner: boolean;
   usersNumber?: string;
-  userName?: string;
   userId?: string;
 }
 

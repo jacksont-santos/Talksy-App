@@ -3,8 +3,9 @@ import { HttpService } from './httpService';
 const CHAT_MANAGER_URL = import.meta.env.VITE_CHAT_MANAGER_URL;
 
 export interface userAuth {
-    username: string;
+  username: string;
   password: string;
+  nickname: string;
 }
 
 class UserService {
@@ -27,8 +28,8 @@ class UserService {
     return this.httpService.delete(`/user/delete`);
   }
 
-  public async signin(data: userAuth) {
-    return this.httpService.post('/user/signin', data);
+  public async signin(data: Omit<userAuth, 'nickname'>) {
+    return this.httpService.post('/auth/signin', data);
   }
 }
 

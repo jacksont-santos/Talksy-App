@@ -78,7 +78,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ setSession, setDisplayRoomList
           onClick={() => setSession("participant")}
         >
           <MessageSquareText size={20} />
-          <span className="text-xs  font-bold">Participante</span>
+          <span className="text-xs  font-bold">Membro</span>
         </div>
       {authState.isAuthenticated && (
         <div

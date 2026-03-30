@@ -19,7 +19,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
 }) => {
   const [name, setName] = useState('');
   const [active, setIsActive] = useState(true);
-  const [isPublic, setIsPublic] = useState(true);
+  const [isPublic, setIsPublic] = useState<'true' | 'false'>('true');
   const [maxUsers, setMaxUsers] = useState(5);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -28,7 +28,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
     if (room) {
       setName(room.name);
       setIsActive(room.active);
-      setIsPublic(room.public);
+      setIsPublic(room.public ? 'true' : 'false');
       setMaxUsers(room.maxUsers);
     }
   }, [room]);
@@ -45,7 +45,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
       return;
     }
     
-    if (!isPublic &&  !password && !room) {
+    if (isPublic === 'false' &&  !password && !room) {
       setError('Senha é obrigatória para salas privadas');
       return;
     }
@@ -106,8 +106,8 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
             <label className="flex items-center">
               <input
                 type="checkbox"
-                checked={isPublic}
-                onChange={(e) => setIsPublic(e.target.checked)}
+                checked={isPublic === 'true'}
+                onChange={(e) => setIsPublic(e.target.checked ? 'true' : 'false')}
                 className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
               />
               <span className="ml-2 text-sm">Publica</span>
@@ -122,7 +122,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
             required
           />
           
-          {!isPublic && (
+          {isPublic === 'false' && (
             <Input
               label={room ? 'Nova senha (deixe em branco para manter a atual)' : 'Senha'}
               type="password"

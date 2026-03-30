@@ -2,11 +2,12 @@ import React, { useState } from "react";
 import { X } from "lucide-react";
 import { Input } from "../common/Input";
 import { Button } from "../common/Button";
+import { timer } from "../../utils/timer";
 
 interface JoinRoomModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onJoin: (password?: string) => void;
+  onJoin: (password: string) => void;
   roomName: string;
 }
 
@@ -18,20 +19,23 @@ export const JoinRoomModal: React.FC<JoinRoomModalProps> = ({
 }) => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   if (!isOpen) {
     return null;
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+    if (loading) return;
     if (!password) {
       setError("Sala protegida por senha");
       return;
-    }
-
+    };
     onJoin(password);
+    setLoading(true);
+    await timer(5000);
+    setLoading(false);
   };
 
   return (
@@ -76,7 +80,7 @@ export const JoinRoomModal: React.FC<JoinRoomModalProps> = ({
               Cancelar
             </Button>
             <Button type="submit" variant="primary" size="sm">
-              Entrar
+              {loading ? "Entrando..." : "Entrar"}
             </Button>
           </div>
         </form>
