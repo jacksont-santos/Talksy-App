@@ -1,17 +1,25 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useServices } from './ServicesContext';
 import { AuthState } from '../types/user';
-import { userAuth, userService } from '../services/userService';
+import { userAuth } from '../services/userService';
+import { useLoading } from './LoadingContext';
 import { AuthModal } from "../../src/components/auth/AuthModal";
+import { ModalHandler } from '../components/common/ModalHandler';
+import { timer } from '../utils/timer';
 
 interface AuthContextType {
   authState: AuthState;
   login: (authData: Omit<userAuth, 'nickname'>) => Promise<void>;
   logout: () => void;
+  setAuthModalOpen: (open: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+
+  const { userService, httpService } = useServices();
+  const loadingService = useLoading();
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
     isAuthenticated: false,
@@ -22,6 +30,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     init();
+    verifyAutentication();
   }, []);
 
   const init = async () => {
@@ -37,15 +46,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             token: authToken,
           });
         })
-        .catch(() => {
+        .catch(async () => {
           localStorage.removeItem('authToken');
           resetAuthState(true);
+          await timer(400);
           setAuthModalOpen(true);
+          loadingService.finishLoader();
         });
     }
     else {
       setAuthModalOpen(true);
+      await timer(400);
+      loadingService.finishLoader();
     };
+  }
+
+  const verifyAutentication = () => {
+    httpService.getHttp().interceptors.response.use(
+      (response) => response,
+      (error) => {
+        console.log(error);
+        if (error.response.status === 401) setAuthModalOpen(true);
+        return Promise.reject(error);
+      });
   }
 
   const login = async (authData: Omit<userAuth, 'nickname'>) => {
@@ -84,13 +107,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
   }
 
+  const isAuthPage = window.location.pathname === '/';
+  const showAuthModal = !isAuthPage && authModalOpen;
+
   return (
-    <AuthContext.Provider value={{ authState, login, logout }}>
+    <AuthContext.Provider value={{ authState, login, logout, setAuthModalOpen}}>
       {children}
-      <AuthModal
-        isOpen={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
-      />
+      <ModalHandler isOpen={showAuthModal}>
+      <AuthModal onClose={() => setAuthModalOpen(false)}/>
+      </ModalHandler>
     </AuthContext.Provider>
   );
 };

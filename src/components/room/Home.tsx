@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Navbar } from "../layout/Navbar";
 import { Sidebar } from "./Sidebar";
-import { roomService } from "../../services/roomService";
 import { Room, FormRoom } from "../../types/room";
 import { useWebSocket, notification } from "../../contexts/WebSocketContext";
 import { CreateRoomModal } from "./CreateRoomModal";
@@ -10,6 +9,7 @@ import { ChatRoomPage } from "./ChatRoom";
 import { RoomList } from "./RoomList";
 import { MessageType } from "../../contexts/WebSocketContext";
 import { useAuth } from "../../contexts/AuthContext";
+import { useServices } from "../../contexts/ServicesContext";
 import { MessageCircleMore } from "lucide-react";
 
 export const HomePage: React.FC = () => {
@@ -27,6 +27,7 @@ export const HomePage: React.FC = () => {
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
   const [room, setRoom] = useState<Room | null>(null);
   const { authState } = useAuth();
+  const { roomService } = useServices();
 
   useEffect(() => {
     document.title = room ? room.name : "Talksy App";

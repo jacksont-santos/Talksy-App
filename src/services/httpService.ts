@@ -20,6 +20,10 @@ export class HttpService {
     });
   }
 
+  public getHttp() {
+    return this.http;
+  }
+
   public async get<T = any>(url: string, config?: AxiosRequestConfig): Promise<T> {
     const response: AxiosResponse<T> = await this.http.get(url, config);
     return response.data;

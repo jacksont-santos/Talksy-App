@@ -2,17 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { Input } from '../common/Input';
 import { Button } from '../common/Button';
 import { useAuth } from '../../contexts/AuthContext';
-import { userService } from '../../services/userService';
 import { useToastContext } from '../common/ToasterProvider';
+import { useServices } from '../../contexts/ServicesContext';
 
 interface AuthModalProps {
-  isOpen: boolean;
   onClose: () => void;
 }
 
 type AuthType = 'signin' | 'signup';
 
-export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
+export const AuthModal: React.FC<AuthModalProps> = ({onClose}) => {
   const [type, setType] = useState<AuthType>('signin');
   const [username, setUsername] = useState('');
   const [nickname, setNickname] = useState('');
@@ -21,6 +20,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const { login } = useAuth();
+  const { userService } = useServices();
   const { showToast } = useToastContext();
 
   useEffect(() => {
@@ -30,8 +30,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     const storedNickname = localStorage.getItem('nickname');
     if (storedNickname) setNickname(storedNickname);
   }, []);
-
-  if (!isOpen) return null;
 
   const clearError = () => {
     if (error) setError('');
@@ -72,8 +70,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const authenticate = async (username: string, password: string) => {
     try {
       await login({ username, password });
-      showToast('success', 'Autenticado com sucesso.');
       onClose();
+      const isAuthPage = window.location.pathname === '/';
+      if (isAuthPage) window.navigation.navigate('/home');
+      else showToast('success', 'Autenticado com sucesso.');
     } catch {
       setError('Usuário ou senha incorretos.');
     }
@@ -116,11 +116,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 animate-fade-in">
-      <div className="relative w-full max-w-sm rounded-xl bg-gray-100 p-6 shadow-xl dark:bg-zinc-900 animate-slide-up">
+      <div className="relative w-full max-w-md rounded-xl bg-gray-100 p-6 shadow-xl dark:bg-zinc-900 animate-slide-up">
         <div className="mb-6 text-center">
           <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100">
-            {type === 'signin' ? 'Bem vindo de volta' : 'Criar conta'}
+            {type === 'signin' ? 'Login' : 'Criar conta'}
           </h2>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
             Acesse e gerencie suas salas de bate-papo.
@@ -197,6 +196,5 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           </div>
         </form>
       </div>
-    </div>
   );
 };

@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { roomService } from "../../services/roomService";
 import { Room, FormRoom } from "../../types/room";
 import { useWebSocket, notification } from "../../contexts/WebSocketContext";
 import { useToastContext } from "../common/ToasterProvider";
+import { useServices } from "../../contexts/ServicesContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { Button } from "../common/Button";
 import { RoomCard } from "./RoomCard";
@@ -32,10 +32,12 @@ export const RoomList: React.FC<RoomListProps> = ({
   roomIdJoined,
 }) => {
   const loadingService = useLoading();
+  const { roomService } = useServices();
+  const { showToast } = useToastContext();
+
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
-  const { showToast } = useToastContext();
 
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
 
@@ -61,7 +63,6 @@ export const RoomList: React.FC<RoomListProps> = ({
   useEffect(() => {
     if (!connected) return;
     if (authState.isAuthenticated && authState.token) {
-      loadingService.showLoader();
       connect(authState.token);
       getRooms();
     }
@@ -80,7 +81,7 @@ export const RoomList: React.FC<RoomListProps> = ({
       if (queryId && token) {
         getInvitedRoom(queryId, token);
       } else {
-        loadingService.finishLoader();
+        setTimeout(() => loadingService.finishLoader(), 400);
       }
     }
   }, [roomsFetched]);
@@ -97,11 +98,12 @@ export const RoomList: React.FC<RoomListProps> = ({
         setSectionRooms("private", privateResponse.data);
         setSectionRooms("participant", participantResponse.data);
       })
-      .catch((error) => {
+      .catch(async (error) => {
         if (error?.code === "ECONNREFUSED") {
           setRetry(false);
           showToast("error", "Não foi possível conectar ao servidor.");
         } else if (error.status !== 404) {
+          await timer(400);
           loadingService.setMessage("Erro ao carregar as salas");
           resetRooms();
         }
@@ -136,11 +138,13 @@ export const RoomList: React.FC<RoomListProps> = ({
     const invitedRoom = await roomService
       .getInvitedRoom(query, token)
       .then((response) => response.data)
-      .catch((error) => {
+      .catch(async (error) => {
         console.log(error);
+        await timer(400);
         loadingService.setMessage("Erro ao carregar a sala");
       });
       if (!invitedRoom) return;
+      await timer(400);
       loadingService.finishLoader();
       if (isMember(invitedRoom)) signinRoom(invitedRoom._id);
       else {

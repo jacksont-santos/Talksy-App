@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
-import { roomService } from "../../services/roomService";
+import { useServices } from "../../contexts/ServicesContext";
 import ThemeToggle from "../../style/theme";
 import { FormRoom } from "../../types/room";
 import { CreateRoomModal } from "./CreateRoomModal";
@@ -20,8 +20,9 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ setSession, setDisplayRoomList, isMobile }) => {
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const { authState } = useAuth();
+  const { roomService } = useServices();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [expanded, setExpanded] = useState(true);
 
   const expandList = (state: boolean) => {

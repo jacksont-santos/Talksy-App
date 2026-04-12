@@ -13,7 +13,8 @@ type LoadingContextType = {
 const LoadingContext = createContext<LoadingContextType | undefined>(undefined);
 
 export const LoadingProvider = ({ children }: { children: ReactNode }) => {
-  const [isLoading, setIsLoading] = useState(false);
+  const isAuthPage = window.location.pathname === '/';
+  const [isLoading, setIsLoading] = useState(isAuthPage ? false : true);
   const [message, setNewMessage] = useState<string>();
 
   const showLoader = () => {
@@ -34,7 +35,7 @@ export const LoadingProvider = ({ children }: { children: ReactNode }) => {
     await timer(400);
     setIsLoading(false);
     setNewMessage(undefined);
-  }
+  };
 
   return (
     <LoadingContext.Provider value={{ isLoading, setMessage, showLoader, hideLoader, finishLoader }}>
