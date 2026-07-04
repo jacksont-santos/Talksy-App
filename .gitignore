@@ -9,6 +9,7 @@ lerna-debug.log*
 
 .bolt
 node_modules
+dist
 *.local
 
 # Editor directories and files

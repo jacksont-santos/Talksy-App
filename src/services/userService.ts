@@ -1,6 +1,5 @@
 import { HttpService } from './httpService';
 
-const CHAT_MANAGER_URL = import.meta.env.VITE_CHAT_MANAGER_URL;
 
 export interface userAuth {
   username: string;
@@ -8,12 +7,13 @@ export interface userAuth {
   nickname: string;
 }
 
-class UserService {
-
+export class UserService {
   private httpService: HttpService;
 
-  constructor() {
-    this.httpService = new HttpService(CHAT_MANAGER_URL);
+  constructor(
+    httpService: HttpService
+  ) {
+    this.httpService = httpService;
   }
 
   public async getUser() {
@@ -32,5 +32,3 @@ class UserService {
     return this.httpService.post('/auth/signin', data);
   }
 }
-
-export const userService = new UserService();

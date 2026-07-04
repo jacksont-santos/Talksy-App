@@ -3,8 +3,8 @@ import { MessageItem } from "./MessageItem";
 import { MessageInput } from "./MessageInput";
 import { useWebSocket, notification } from "../../contexts/WebSocketContext";
 import { useAuth } from "../../contexts/AuthContext";
+import { useServices } from "../../contexts/ServicesContext";
 import { Room } from "../../types/room";
-import { roomService } from "../../services/roomService";
 import { ArrowDownIcon, LogOutIcon, Link, Save } from "lucide-react";
 import { timer } from "../../utils/timer";
 
@@ -31,6 +31,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 }) => {
   const { sendMessage, notifications, checkNotification } = useWebSocket();
   const { authState } = useAuth();
+  const { roomService } = useServices();
   const [roomMessages, setRoomMessages] = useState<Message[]>([]);
   const [iteractivityInited, setIteractivityInited] = useState(false);
   const [loadingMoreMessages, setLoadingMoreMessages] = useState(false);

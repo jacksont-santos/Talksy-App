@@ -1,14 +1,15 @@
 import { HttpService } from './httpService';
 import { FormRoom } from '../types/room';
 
-const CHAT_MANAGER_URL = import.meta.env.VITE_CHAT_MANAGER_URL;
 
-class RoomService {
+export class RoomService {
 
   private httpService: HttpService;
 
-  constructor() {
-    this.httpService = new HttpService(CHAT_MANAGER_URL);
+  constructor(
+    httpService: HttpService
+  ) {
+    this.httpService = httpService;
   }
 
   public async getPrivateRooms() {
@@ -51,5 +52,3 @@ class RoomService {
     return this.httpService.get(`/room/messages/${roomId}`, { params: { page, limit } });
   }
 }
-
-export const roomService = new RoomService();
