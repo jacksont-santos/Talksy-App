@@ -50,12 +50,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           localStorage.removeItem('authToken');
           resetAuthState(true);
           await timer(400);
-          setAuthModalOpen(true);
+          if (window.location.pathname !== '/') setAuthModalOpen(true);
           loadingService.finishLoader();
         });
     }
     else {
-      setAuthModalOpen(true);
+      if (window.location.pathname !== '/') setAuthModalOpen(true);
       await timer(400);
       loadingService.finishLoader();
     };

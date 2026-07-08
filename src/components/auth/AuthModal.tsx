@@ -4,14 +4,29 @@ import { Button } from '../common/Button';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToastContext } from '../common/ToasterProvider';
 import { useServices } from '../../contexts/ServicesContext';
+import { useLoading } from '../../contexts/LoadingContext';
 
 interface AuthModalProps {
   onClose: () => void;
+  theme?: 'presentation' | 'default';
 }
+
+const themes = {
+  default: {
+    background: 'bg-gray-100 p-6 shadow-xl dark:bg-zinc-900',
+    header: 'text-gray-800 dark:text-gray-100',
+    text: 'text-gray-600 dark:text-gray-400',
+  },
+  presentation: {
+    background: 'backdrop-blur-xl bg-white/5 border border-white/10',
+    header: 'text-white',
+    text: 'text-white',
+  }
+};
 
 type AuthType = 'signin' | 'signup';
 
-export const AuthModal: React.FC<AuthModalProps> = ({onClose}) => {
+export const AuthModal: React.FC<AuthModalProps> = ({onClose, theme='default'}) => {
   const [type, setType] = useState<AuthType>('signin');
   const [username, setUsername] = useState('');
   const [nickname, setNickname] = useState('');
@@ -22,6 +37,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({onClose}) => {
   const { login } = useAuth();
   const { userService } = useServices();
   const { showToast } = useToastContext();
+  const { showLoader } = useLoading();
 
   useEffect(() => {
     const storedUsername = localStorage.getItem('username');
@@ -70,10 +86,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({onClose}) => {
   const authenticate = async (username: string, password: string) => {
     try {
       await login({ username, password });
-      onClose();
       const isAuthPage = window.location.pathname === '/';
-      if (isAuthPage) window.navigation.navigate('/home');
-      else showToast('success', 'Autenticado com sucesso.');
+      if (isAuthPage) {
+        showLoader();
+        window.navigation.navigate('/home');
+      } else {
+        onClose();
+        showToast('success', 'Autenticado com sucesso.');
+      }
     } catch {
       setError('Usuário ou senha incorretos.');
     }
@@ -116,12 +136,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({onClose}) => {
   };
 
   return (
-      <div className="relative w-full max-w-md rounded-xl bg-gray-100 p-6 shadow-xl dark:bg-zinc-900 animate-slide-up">
+      <div className={`relative w-full max-w-md rounded-xl p-6 shadow-xl  animate-slide-up ${themes[theme].background}`}>
         <div className="mb-6 text-center">
-          <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100">
+          <h2 className={`text-2xl font-semibold ${themes[theme].header}`}>
             {type === 'signin' ? 'Login' : 'Criar conta'}
           </h2>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+          <p className={`mt-2 text-sm ${themes[theme].text}`}>
             Acesse e gerencie suas salas de bate-papo.
           </p>
         </div>
@@ -141,6 +161,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({onClose}) => {
               setUsername(e.target.value);
               clearError();
             }}
+            labelClassName={themes[theme].header}
             required
           />
 
@@ -152,6 +173,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({onClose}) => {
               setPassword(e.target.value);
               clearError();
             }}
+            labelClassName={themes[theme].header}
             required
           />
 
@@ -163,6 +185,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({onClose}) => {
                 setNickname(e.target.value);
                 clearError();
               }}
+              labelClassName={themes[theme].header}
               required
             />
           )}

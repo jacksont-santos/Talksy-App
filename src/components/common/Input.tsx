@@ -7,6 +7,7 @@ interface InputProps {
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   className?: string;
+  labelClassName?: string;
   required?: boolean;
   error?: string;
   id?: string;
@@ -21,6 +22,7 @@ export const Input: React.FC<InputProps> = ({
   value,
   onChange,
   className = '',
+  labelClassName = 'text-gray-800 dark:text-gray-200',
   required = false,
   error,
   id,
@@ -32,7 +34,7 @@ export const Input: React.FC<InputProps> = ({
   return (
     <div className="mb-4">
       {label && (
-        <label htmlFor={inputId} className="block text-sm font-medium text-gray-800 dark:text-gray-200 mb-1">
+        <label htmlFor={inputId} className={`block text-sm font-medium ${labelClassName} mb-1`}>
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
         </label>
