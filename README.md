@@ -72,4 +72,4 @@ Este projeto é configurado como **Progressive Web App**, permitindo instalaçã
 
 ## Talksy App
 
-https://talksy-app-hmtq.onrender.com
+https://talksy-app-csek.onrender.com
